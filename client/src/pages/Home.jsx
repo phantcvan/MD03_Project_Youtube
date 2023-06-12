@@ -9,8 +9,10 @@ import VideoComp from "../components/VideoComp";
 import { onAuthStateChanged } from "firebase/auth";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { setVideos, getVideos, setAllTags, getAllTags,getNewVideo } from '../slices/videoSlice';
-import { setAllChannels, getAllChannels, setCurrentUser, getCurrentUser } from '../slices/channelSlice';
+import { setVideos, getVideos, setAllTags, getAllTags, getNewVideo } from '../slices/videoSlice';
+import {
+  setAllChannels, getAllChannels, setCurrentUser, getCurrentUser, getChannelsSub,
+  setChannelsSub} from '../slices/channelSlice';
 
 
 const Home = ({ }) => {
@@ -25,19 +27,25 @@ const Home = ({ }) => {
   const allTags = useSelector(getAllTags);
   const allChannels = useSelector(getAllChannels);
   const currentUser = useSelector(getCurrentUser);
+  const channelsSub = useSelector(getChannelsSub);
 
   const fetchData = async () => {
     try {
-      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse] = await Promise.all([
+      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse, subscribesResponse] = await Promise.all([
         axios.get('http://localhost:8000/api/v1/tags'),
         axios.get('http://localhost:8000/api/v1/videos/list_tags'),
         axios.get('http://localhost:8000/api/v1/videos'),
         axios.get('http://localhost:8000/api/v1/channels'),
+        axios.get(`http://localhost:8000/api/v1/subscribes/all/${user?.email}`),
       ]);
 
       const tagsWithAll = tagsResponse.data.tags;
       tagsWithAll.unshift({ tag: 'All' });
       setTags(tagsWithAll);
+      const subscribedChannels = allChannels.filter(channel => {
+        return subscribesResponse.data.subscribes.some(subscribe => subscribe.channel_id === channel.channel_id);
+    });
+    dispatch(setChannelsSub(subscribedChannels));
       dispatch(setAllTags(allTagsResponse.data.tags));
       dispatch(setVideos(videosResponse.data.videos))
       // setChannels(channelsResponse.data.channels);

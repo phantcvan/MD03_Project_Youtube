@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 // import { getVideos } from '../slices/videoSlice';
-import { getAllChannels, setAllChannels, getCurrentUser, setCurrentUser } from '../slices/channelSlice';
+import {
+    getAllChannels, setAllChannels, getCurrentUser, setCurrentUser,
+    getChannelsSub, setChannelsSub
+} from '../slices/channelSlice';
 import { getUser, setUser } from "../slices/userSlice";
 import { useParams } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
+import { FaRegBell } from "react-icons/fa";
 import { auth, db, timestamp } from "../firebase";
 // import UploadVideo from '../components/UploadVideo';
 import VideoComp from '../components/VideoComp';
@@ -34,34 +38,44 @@ const Channel = ({ }) => {
     const [videoHome, setVideoHome] = useState(null);
     const [uploadTime, setUploadTime] = useState(null);
     const [edited, setEdited] = useState(false);
+    const [subscribes, setSubscribes] = useState([]);
+    const [subscriber, setSubscriber] = useState(0); //số người đăng ký
+    const [isSubscribe, setIsSubscribe] = useState(false);
+    const channelsSub = useSelector(getChannelsSub); //các kênh đăng ký
+
+    const fetchData = async () => {
+        try {
+            const [videosResponse, channelResponse, allChannelResponse, subscribesResponse, subscriberResponse] = await Promise.all([
+                axios.get(`http://localhost:8000/api/v1/videos/channel/${id}`),
+                axios.get(`http://localhost:8000/api/v1/channels/${id}`),
+                axios.get(`http://localhost:8000/api/v1/channels`),
+                axios.get(`http://localhost:8000/api/v1/subscribes`),
+                axios.get(`http://localhost:8000/api/v1/subscribes/${id}`),
+            ]);
+            setVideosBelongToChannel(videosResponse.data.videoBelongChannel);
+            setChannelNow(channelResponse.data.findChannel);
+            setVideoCount(videosResponse.data.videoBelongChannel.length);
+            setVideoHome(videosResponse.data.videoBelongChannel?.sort((a, b) => b.views - a.views)[0]);
+            setUploadTime(new Date(videoHome?.upload_date).toLocaleDateString('en-GB'));
+            setSubscriber(subscriberResponse.data.subscribes?.length);
+            console.log("suber", subscriberResponse.data.subscribes);
+            setIsSubscribe(subscriberResponse.data.subscribes.some(item => item.email === user?.email))
+            dispatch(setAllChannels(allChannelResponse.data.channels));
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    dispatch(setUser(user));
+                    handleAddChannel(allChannelResponse.data.channels, user);
+                } else {
+                    dispatch(setUser(null));
+                }
+
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    }
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [videosResponse, channelResponse, allChannelResponse] = await Promise.all([
-                    axios.get(`http://localhost:8000/api/v1/videos/channel/${id}`),
-                    axios.get(`http://localhost:8000/api/v1/channels/${id}`),
-                    axios.get(`http://localhost:8000/api/v1/channels`),
-                ]);
-                setVideosBelongToChannel(videosResponse.data.videoBelongChannel);
-                setChannelNow(channelResponse.data.findChannel);
-                setVideoCount(videosResponse.data.videoBelongChannel.length);
-                setVideoHome(videosResponse.data.videoBelongChannel.sort((a, b) => b.views - a.views)[0]);
-                setUploadTime(new Date(videoHome.upload_date).toLocaleDateString('en-GB'));
-                dispatch(setAllChannels(allChannelResponse.data.channels));
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        dispatch(setUser(user));
-                        handleAddChannel(allChannelResponse.data.channels, user);
-                    } else {
-                        dispatch(setUser(null));
-                    }
-
-                });
-            } catch (error) {
-                console.error(error);
-            }
-        };
         fetchData();
     }, [id, edited, newVideo]);
 
@@ -107,12 +121,56 @@ const Channel = ({ }) => {
             console.error(error);
         }
     };
-    console.log('channelNow', channelNow[0]);
+    // console.log('channelNow', channelNow[0]);
 
-    const subscriber = 1;
-    console.log("videosBelongToChannel", videosBelongToChannel);
-    console.log(canEdit);
+    // console.log("videosBelongToChannel", videosBelongToChannel);
+    // console.log(canEdit);
 
+    const getCurrentDate = () => {
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const handleAddSubscribe = async () => {
+        const currentDate = getCurrentDate();
+        let request;
+        let successMessage;
+        let newChannelSub = [];
+        if (!isSubscribe) {
+            request = axios.post('http://localhost:8000/api/v1/subscribes', {
+                email: user?.email,
+                channel_id: id,
+                dateSubs: currentDate
+            });
+            successMessage = 'Thêm subscribe thành công';
+            newChannelSub = [...channelsSub, channelNow];
+            dispatch(setChannelsSub(newChannelSub));
+        } else {
+            console.log(id);
+            request = axios.delete(`http://localhost:8000/api/v1/subscribes/${id}`, {
+                data: { email: user?.email }
+            });
+            successMessage = 'Delete subscribe thành công';
+            newChannelSub = channelsSub.filter(item => item.channel_id !== id);
+            dispatch(setChannelsSub(newChannelSub));
+        }
+
+        try {
+            const response = await request;
+            if (response.data.status === 200) {
+                console.log(successMessage);
+                fetchData();
+            }
+        } catch (error) {
+            // Xử lý lỗi một cách phù hợp
+            console.error(error);
+        }
+    };
+
+    //   console.log("subscriber",subscriber);
     return (
         <div className="pt-20 px-9 bg-yt-black min-h-screen h-[calc(100%-53px)] w-full text-yt-white">
             <div className='flex justify-between ml-32 mr-10 items-center'>
@@ -129,35 +187,41 @@ const Channel = ({ }) => {
                         </div>
                     </div>
                 </div>
+
                 <div className='flex basis-1/3 justify-end '>
-                    {currentUser?.email !== channelNow[0]?.email
-                        ? <button className='rounded-l-full rounded-r-full bg-yt-white text-yt-black px-3 py-2'>
-                            Subscribe
-                        </button>
-                        : (videoCount > 0
-                            ? <div className='flex gap-4 items-center'>
-                                <button
-                                    className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2'
-                                    onClick={() => setOpen(true)}
-                                >
+                    {currentUser?.email !== channelNow[0]?.email ? (
+                        isSubscribe ? (
+                            <>
+                                <button className="bg-yt-light-2 text-yt-white flex px-3 py-2 rounded-lg text-sm font-medium"
+                                    onClick={handleAddSubscribe}>
+                                    <span className='flex items-center gap-2'><FaRegBell size={18} /> Subscribed</span>
+                                </button>
+                            </>
+                        ) : (
+                            <button className='rounded-l-full rounded-r-full bg-yt-white text-yt-black px-3 py-2'
+                                onClick={handleAddSubscribe}>
+                                Subscribe
+                            </button>
+                        )
+                    ) : (
+                        videoCount > 0 ? (
+                            <div className='flex gap-4 items-center'>
+                                <button className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2' onClick={() => setOpen(true)}>
                                     Upload video
                                 </button>
-                                <button
-                                    className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2'
-                                    onClick={() => setIsChoice(2)}
-                                >
+                                <button className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2' onClick={() => setIsChoice(2)}>
                                     Manager video
                                 </button>
                             </div>
-                            : <button
-                                className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2 relative'
-                                onClick={() => setOpen(true)}
-                            >
+                        ) : (
+                            <button className='rounded-l-full rounded-r-full bg-yt-light-2 px-3 py-2 relative' onClick={() => setOpen(true)}>
                                 Upload video
                             </button>
-
-                        )}
+                        )
+                    )}
                 </div>
+
+
             </div>
             <div className='ml-32 mr-10 my-4 border-b-[1px] rounded-sm border-yt-gray'>
                 <div className={`rounded-sm bg-yt-light inline-block cursor-pointer pt-1

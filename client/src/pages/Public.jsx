@@ -18,7 +18,7 @@ const Public = () => {
             <Navbar setShowMenu={toggleShowMenu} />
             <div className='flex flex-auto relative'>
                 {showMenu && <Sidebar />}
-                    <Outlet />
+                    <Outlet setShowMenu={setShowMenu}/>
             </div>
         </div>
     )

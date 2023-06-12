@@ -8,58 +8,64 @@ import { BsNewspaper } from "react-icons/bs";
 import { HiOutlineFire } from "react-icons/hi";
 import { IoMusicalNoteOutline } from "react-icons/io5";
 import { CiTrophy } from "react-icons/ci";
-import { getAllChannels} from '../slices/channelSlice';
+import { getAllChannels, getChannelsSub } from '../slices/channelSlice';
 import { useSelector } from "react-redux";
-import { getUser} from "../slices/userSlice";
+import { getUser } from "../slices/userSlice";
 
 
-export const SideBar =()=> {
+export const SideBar = () => {
   const user = useSelector(getUser);
   const allChannels = useSelector(getAllChannels);
-  let channel_id=""
+  const channelsSub = useSelector(getChannelsSub);
+  let channel_id = ""
   if (user && allChannels) {
-    channel_id=allChannels?.find(channel => channel.email === user.email)?.channel_id;
+    channel_id = allChannels?.find(channel => channel.email === user.email)?.channel_id;
   }
-  let SideBarItems ={
+  let SideBarItems = {
     Top: [
       { icon: <AiFillHome size={21} />, name: "Home", path: '' },
       // { icon: <SiYoutubemusic size={21} />, name: "Shorts", path: ''  },
-      { icon: <MdOutlineSubscriptions size={21} />, name: "Subscriptions", path: ''  },
+      { icon: <MdOutlineSubscriptions size={21} />, name: "Subscriptions", path: '/subscription' },
     ],
     Middle: [
       // { icon: <MdVideoLibrary size={21} />, name: "Library", path: ''  },
-      { icon: <VscHistory size={21} />, name: "History", path: '/history'  },
+      // { icon: <VscHistory size={21} />, name: "History", path: '/history'  },
       { icon: <AiOutlinePlaySquare size={21} />, name: "Your videos", path: `/channel/${channel_id}` },
       // { icon: <AiOutlineClockCircle size={21} />, name: "Watch later" },
-      { icon: <BiLike size={21} />, name: "Liked videos", path: ''  },
+      { icon: <BiLike size={21} />, name: "Liked videos", path: '' },
     ],
     Explore: [
-      { icon: <HiOutlineFire size={21} />, name: "Trending", path: ''  },
-      { icon: <IoMusicalNoteOutline size={21} />, name: "Music", path: ''  },
-      { icon: <SiYoutubegaming size={21} />, name: "Gaming", path: ''  },
-      { icon: <BsNewspaper size={21} />, name: "News", path: ''  },
-      { icon: <CiTrophy size={23} />, name: "Sports", path: ''  },
+      { icon: <HiOutlineFire size={21} />, name: "Trending", path: '' },
+      { icon: <IoMusicalNoteOutline size={21} />, name: "Music", path: '' },
+      { icon: <SiYoutubegaming size={21} />, name: "Gaming", path: '' },
+      { icon: <BsNewspaper size={21} />, name: "News", path: '' },
+      { icon: <CiTrophy size={23} />, name: "Sports", path: '' },
     ],
+    Subscriptions: channelsSub.map(channel => ({
+      logoUrl: channel.logoUrl,
+      name: channel.channel_name,
+      path: `/channel/${channel.channel_id}`,
+    })),
   }
   if (!user) {
-    SideBarItems ={
+    SideBarItems = {
       Top: [
         { icon: <AiFillHome size={21} />, name: "Home", path: '' },
         // { icon: <MdOutlineSubscriptions size={21} />, name: "Subscriptions", path: ''  },
       ],
       Middle: [],
       Explore: [
-        { icon: <HiOutlineFire size={21} />, name: "Trending", path: ''  },
-        { icon: <IoMusicalNoteOutline size={21} />, name: "Music", path: ''  },
-        { icon: <SiYoutubegaming size={21} />, name: "Gaming", path: ''  },
-        { icon: <BsNewspaper size={21} />, name: "News", path: ''  },
-        { icon: <CiTrophy size={23} />, name: "Sports", path: ''  },
+        { icon: <HiOutlineFire size={21} />, name: "Trending", path: '' },
+        { icon: <IoMusicalNoteOutline size={21} />, name: "Music", path: '' },
+        { icon: <SiYoutubegaming size={21} />, name: "Gaming", path: '' },
+        { icon: <BsNewspaper size={21} />, name: "News", path: '' },
+        { icon: <CiTrophy size={23} />, name: "Sports", path: '' },
       ],
     };
   }
   return {
     SideBarItems,
-    };
+  };
 };
 
 

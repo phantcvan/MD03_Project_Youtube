@@ -123,32 +123,32 @@ const Video = () => {
   };
 
   // console.log("all", allChannels);
+  const fetchDataChangeId = async () => {
+    try {
+      const [videoResponse, commentsResponse, actionsResponse, subscribesResponse] = await Promise.all([
+        axios.get(`http://localhost:8000/api/v1/videos/${id}`),
+        axios.get(`http://localhost:8000/api/v1/comments/${id}`),
+        axios.get(`http://localhost:8000/api/v1/actions/${id}`),
+        axios.get(`http://localhost:8000/api/v1/subscribes`),
+      ]);
+      setData(videoResponse.data.findVideo[0]);
+      setComments(commentsResponse.data.findCmt);
+      updateView(videoResponse.data.findVideo[0].views);
+      setSubscribes(subscribesResponse.data.subscribes);
+      setIsSubscribe(subscribesResponse.data.subscribes.some(item => item.channel_id === videoResponse.data.findVideo[0].channel_id &&
+        item.email === user.email))
+      setCountLike(actionsResponse.data.actions.filter(action => action.action === 1).length);
+      setCountDislike(actionsResponse.data.actions.filter(action => action.action === 0).length);
+      setUserAction(actionsResponse.data.actions.find(action => action.email === user.email).action)
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchDataChangeId = async () => {
-      try {
-        const [videoResponse, commentsResponse, actionsResponse, subscribesResponse] = await Promise.all([
-          axios.get(`http://localhost:8000/api/v1/videos/${id}`),
-          axios.get(`http://localhost:8000/api/v1/comments/${id}`),
-          axios.get(`http://localhost:8000/api/v1/actions/${id}`),
-          axios.get(`http://localhost:8000/api/v1/subscribes`),
-        ]);
-        setData(videoResponse.data.findVideo[0]);
-        setComments(commentsResponse.data.findCmt);
-        updateView(videoResponse.data.findVideo[0].views);
-        setSubscribes(subscribesResponse.data.subscribes);
-        setIsSubscribe(subscribesResponse.data.subscribes.some(item=>item.channel_id===videoResponse.data.findVideo[0].channel_id && 
-          item.email===user.email))
-        setCountLike(actionsResponse.data.actions.filter(action => action.action === 1).length);
-        setCountDislike(actionsResponse.data.actions.filter(action => action.action === 0).length);
-        setUserAction(actionsResponse.data.actions.find(action => action.email === user.email).action)
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchDataChangeId();
   }, [id]);
-  console.log(isSubscribe);
+  // console.log(isSubscribe);
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -252,8 +252,7 @@ const Video = () => {
       console.error(error);
     }
   };
-  console.log("countLike", countLike, "countDislike", countDislike, "userAction", userAction);
-
+  // console.log("countLike", countLike, "countDislike", countDislike, "userAction", userAction);
 
   const channelNow = allChannels?.filter((channel) => channel.channel_id == data?.channel_id);
   const videoUrl = data?.videoURL;
@@ -309,6 +308,39 @@ const Video = () => {
     }
   }
 
+  const handleAddSubscribe = async () => {
+    const currentDate = getCurrentDate();
+    
+    let request;
+    let successMessage;
+    
+    if (!isSubscribe) {
+      request = axios.post('http://localhost:8000/api/v1/subscribes', {
+        email: user?.email,
+        channel_id: channel_id,
+        dateSubs: currentDate
+      });
+      successMessage = 'Thêm subscribe thành công';
+    } else {
+      console.log(channel_id);
+      request = axios.delete(`http://localhost:8000/api/v1/subscribes/${channel_id}`, {
+        data: { email: user?.email }
+      });
+      successMessage = 'Delete subscribe thành công';
+    }
+  
+    try {
+      const response = await request;
+      if (response.data.status === 200) {
+        console.log(successMessage);
+        fetchDataChangeId();
+      }
+    } catch (error) {
+      // Xử lý lỗi một cách phù hợp
+      console.error(error);
+    }
+  };
+  
 
   return (
     <div className="py-12 px-9 bg-yt-black relative flex flex-row min-h-screen h-[calc(100%-53px)] w-[100%] mt-10 gap-8">
@@ -327,6 +359,7 @@ const Video = () => {
             setOpen={setOpen} countLike={countLike} countDislike={countDislike} userAction={userAction}
             onLikeClick={handleLikeClick} onDislikeClick={handleDislikeClick}
             channelEmail={channelEmail} userEmail={user?.email} isSubscribe={isSubscribe}
+            handleAddSubscribe={handleAddSubscribe}
           />
         </div>
         <div className="bg-yt-light-black mt-4 rounded-2xl text-sm p-3 text-yt-white">

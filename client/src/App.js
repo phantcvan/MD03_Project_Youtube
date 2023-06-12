@@ -7,6 +7,7 @@ import Public from "./pages/Public";
 import History from "./pages/History";
 import Search from "./pages/Search";
 import UploadVideo from "./components/UploadVideo";
+import Subscription from "./pages/Subscription";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="" element={<Home />} />
             <Route path="/video/:id" element={<Video />} />
             <Route path="/channel/:id" element={<Channel />} />
+            <Route path="/subscription" element={<Subscription />} />
             <Route path="/history" element={<History />} />
             <Route path="/search" element={<Search />} />
           </Route>

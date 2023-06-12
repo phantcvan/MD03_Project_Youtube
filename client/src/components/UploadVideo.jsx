@@ -68,6 +68,7 @@ const UploadVideo = ({ setOpen, user }) => {
       formData.append("channel_id", channelId);
       formData.append("upload_date", currentDate);
       formData.append("title", "draft");
+      
       formData.append("views", 0);
 
       await axios.post('http://localhost:8000/api/v1/videos', formData)

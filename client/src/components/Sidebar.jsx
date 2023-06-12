@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SideBar, CategoryItems } from "../static/data";
 import "../App.css";
 import { Link } from "react-router-dom";
-import { getAllChannels } from '../slices/channelSlice';
+import { getAllChannels, getChannelsSub } from '../slices/channelSlice';
 import { setUser, getUser } from "../slices/userSlice";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../firebase";
@@ -16,6 +16,7 @@ const Sidebar = () => {
   const dispatch = useDispatch();
   const user = useSelector(getUser);
   const allChannels = useSelector(getAllChannels);
+  const channelsSub = useSelector(getChannelsSub);
   const sidebar = SideBar();
   // const channel_id = allChannels?.find((e, i) => e.email === user.email)?.channel_id;
 
@@ -31,11 +32,12 @@ const Sidebar = () => {
         {sidebar.SideBarItems.Top.map((item, index) => (
           <Link to={item.path} key={index}>
             <div
-              className={`h-10 flex justify-start px-3 rounded-xl items-center cursor-pointer hover:bg-yt-light-black my-1 ${item.name === active ? "bg-yt-light-black" : "bg-yt-black"
+              className={`h-10 flex justify-start px-3 rounded-xl items-center cursor-pointer hover:bg-yt-light-black
+               my-1 ${item.name === active ? "bg-yt-light-black" : "bg-yt-black"
                 }`}
               onClick={() => setActive(item.name)}
             >
-              <span className="mr-5">{item.icon}</span>
+              <span className="mr-5 my-1">{item.icon}</span>
               <p className="p-2 text-sm font-medium">{item.name}</p>
             </div>
           </Link>
@@ -76,22 +78,28 @@ const Sidebar = () => {
           </div>
         </div>
       }
-      {/* <h2 className="pt-1 px-3">Explore</h2>
-      <div className="mb-4">
-        {sidebar.SideBarItems.Explore.map((item, index) => (
-          <Link to={item.path} key={index}>
-            <div
-              key={index}
-              className={`h-10 flex justify-start px-3 rounded-xl items-center cursor-pointer hover:bg-yt-light-black my-1 ${item.name === active ? "bg-yt-light-black" : "bg-yt-black"
-                }`}
-              onClick={() => setActive(item.name)}
-            >
-              <span className="mr-5">{item.icon}</span>
-              <p className="p-2 text-sm font-medium">{item.name}</p>
-            </div>
-          </Link>
-        ))}
-      </div> */}
+      {sidebar.SideBarItems.Subscriptions.length > 0
+        && <div>
+          <hr className="text-yt-light-black my-2" />
+          <h2 className="py-2 px-3">Subscriptions</h2>
+          <div className="mb-4">
+            {sidebar.SideBarItems.Subscriptions.map((item, index) => (
+              <Link to={item.path} key={index}>
+                <div
+                  className={`h-10 flex justify-start px-3 rounded-xl items-center cursor-pointer hover:bg-yt-light-black
+               my-1 ${item.name === active ? "bg-yt-light-black" : "bg-yt-black"} gap-4`}
+                  onClick={() => setActive(item.name)}
+                >
+                  <div className="h-6 w-6 rounded-full overflow-hidden">
+                    <img src={item.logoUrl} alt="" />
+                  </div>
+                  <p className="p-2 text-sm font-medium">{item.name}</p>
+                </div>
+              </Link>
+            ))}
+
+          </div>
+        </div>}
       <hr className="text-yt-light-black" />
       <div className="flex flex-wrap">
         {CategoryItems.map((item, index) => {

@@ -79,7 +79,7 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
           &&
           <Link to={`/channel/${channel_id}`}>
             <div className="flex h-9 w-9 rounded-full overflow-hidden">
-              <img src={channelLogo} alt="" className="w-full h-full  object-cover" />
+              <img src={channelLogo} alt="" className="w-full h-full object-cover" />
             </div>
           </Link>
         }

@@ -7,10 +7,8 @@ import { handleNumber } from "../static/fn";
 
 
 const VideoInfo = ({ id, channel_id, channelLogo, channelName, setOpen, countLike, countDislike, userAction,
-    onLikeClick, onDislikeClick, channelEmail, userEmail, isSubscribe }) => {
+    onLikeClick, onDislikeClick, channelEmail, userEmail, isSubscribe,handleAddSubscribe }) => {
 
-    console.log(channelEmail);
-    console.log("userEmail", userEmail);
 
     // share video --> copy link vào clipboard
     const handleCopy = () => {
@@ -42,10 +40,12 @@ const VideoInfo = ({ id, channel_id, channelLogo, channelName, setOpen, countLik
                     </h3>
                     {channelEmail !== userEmail
                         ? isSubscribe
-                            ? <button className="bg-yt-light-2 text-yt-white flex px-3 py-2 rounded-lg text-sm font-medium">
+                            ? <button className="bg-yt-light-2 text-yt-white flex px-3 py-2 rounded-lg text-sm font-medium"
+                            onClick={handleAddSubscribe}>
                                 <span className='flex items-center gap-2'><FaRegBell size={18} /> Subscribed</span>
                             </button>
-                            : <button className="bg-yt-white px-3 py-2 rounded-lg text-sm font-medium">
+                            : <button className="bg-yt-white px-3 py-2 rounded-lg text-sm font-medium"
+                            onClick={handleAddSubscribe}>
                                 Subscribe
                             </button>
                         : <></>}
