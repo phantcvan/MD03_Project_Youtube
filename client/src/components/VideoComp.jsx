@@ -9,6 +9,7 @@ import { handleNumber } from "../static/fn";
 import axios from "axios";
 import VideoDetail from "./VideoDetail";
 
+
 // import { setChannels, setCurrentUser, getChannels, getCurrentUser } from '../slices/channelSlice';
 
 
@@ -86,8 +87,8 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
         <div className="ml-2 flex">
           <div>
             <Link to={`/video/${video_id}`}>
-              <h2 className="font-medium text-yt-white text-sm mt-0 mb-0 items-center">
-                {title?.length <= 50 ? title : `${title.substr(0, 50)}...`}
+              <h2 className="font-medium text-yt-white text-sm mt-0 mb-0 items-center text-justify">
+                {title?.length <= 70 ? title : `${title.substr(0, 70)}...`}
               </h2>
             </Link>
             {channelDisplay

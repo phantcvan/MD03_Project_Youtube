@@ -87,15 +87,18 @@ const Navbar = ({ setShowMenu }) => {
           </div>
 
           <div className="h-10 flex flex-row items-center basis-2/3 justify-between m-auto">
-            <div className="w-[90%] bg-yt-black flex border border-yt-light-black items-center justify-between rounded-3xl h-10">
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchKeyword}
-                onKeyDown={(e) => handleKeyDown(e)}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                className="w-full bg-yt-black h-6 ml-6 text-yt-white text-start focus:outline-none pl-4"
-              />
+            <div className="w-[90%] bg-yt-black flex border border-yt-light-black items-center 
+            justify-between rounded-3xl h-10">
+              <div className="rounded-l-3xl hover:border hover:border-[#1C62B9] h-10 w-[100%] flex items-center">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchKeyword}
+                  onKeyDown={(e) => handleKeyDown(e)}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  className="w-full bg-yt-black h-6 ml-6 text-yt-white text-start focus:outline-none pl-4"
+                />
+              </div>
               <button className="w-16 h-10 bg-yt-light-black px-2 py-0.5 rounded-r-3xl border-l-2 border-yt-light-black">
                 <HiMagnifyingGlass
                   size={22}

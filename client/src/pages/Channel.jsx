@@ -41,9 +41,10 @@ const Channel = ({ }) => {
     const [subscribes, setSubscribes] = useState([]);
     const [subscriber, setSubscriber] = useState(0); //số người đăng ký
     const [isSubscribe, setIsSubscribe] = useState(false);
+    const [message, setMessage] = useState("");
     const channelsSub = useSelector(getChannelsSub); //các kênh đăng ký
-    const showMenu=useSelector(getShowMenu);
-    const showLogIn=useSelector(getShowLogIn);
+    const showMenu = useSelector(getShowMenu);
+    const showLogIn = useSelector(getShowLogIn);
 
     const fetchData = async () => {
         try {
@@ -60,7 +61,9 @@ const Channel = ({ }) => {
             setVideoHome(videosResponse.data.videoBelongChannel?.sort((a, b) => b.views - a.views)[0]);
             setUploadTime(new Date(videosResponse.data.videoBelongChannel?.sort((a, b) => b.views - a.views)[0]?.upload_date).toLocaleDateString('en-GB'));
             setSubscriber(subscriberResponse.data.subscribes?.length);
-            setIsSubscribe(subscriberResponse.data.subscribes.some(item => item.email === user?.email))
+            if (user) {
+                setIsSubscribe(subscriberResponse.data.subscribes.some(item => item.email === user?.email))
+            } 
             dispatch(setAllChannels(allChannelResponse.data.channels));
             dispatch(setShowMenu(false));
             dispatch(setShowLogIn(false));
@@ -85,8 +88,11 @@ const Channel = ({ }) => {
     useEffect(() => {
         if (user?.email === channelNow[0]?.email) {
             setCanEdit(true)
+        } else {
+            setCanEdit(false)
         }
     }, [channelNow])
+    console.log("email", channelNow[0]?.email);
     function generateRandomChannelId() {
         const randomId = Math.floor(Math.random() * 10000000).toString().padStart(7, "0");
         return randomId;
@@ -138,23 +144,27 @@ const Channel = ({ }) => {
         let request;
         let successMessage;
         let newChannelSub = [];
-        if (!isSubscribe) {
-            request = axios.post('http://localhost:8000/api/v1/subscribes', {
-                email: user?.email,
-                channel_id: id,
-                dateSubs: currentDate
-            });
-            successMessage = 'Thêm subscribe thành công';
-            newChannelSub = [...channelsSub, channelNow[0]];
-            dispatch(setChannelsSub(newChannelSub));
+        if (user) {
+            if (!isSubscribe) {
+                request = axios.post('http://localhost:8000/api/v1/subscribes', {
+                    email: user?.email,
+                    channel_id: id,
+                    dateSubs: currentDate
+                });
+                successMessage = 'Thêm subscribe thành công';
+                newChannelSub = [...channelsSub, channelNow[0]];
+                dispatch(setChannelsSub(newChannelSub));
+            } else {
+                console.log(id);
+                request = axios.delete(`http://localhost:8000/api/v1/subscribes/${id}`, {
+                    data: { email: user?.email }
+                });
+                successMessage = 'Delete subscribe thành công';
+                newChannelSub = channelsSub.filter(item => item.channel_id !== id);
+                dispatch(setChannelsSub(newChannelSub));
+            }
         } else {
-            console.log(id);
-            request = axios.delete(`http://localhost:8000/api/v1/subscribes/${id}`, {
-                data: { email: user?.email }
-            });
-            successMessage = 'Delete subscribe thành công';
-            newChannelSub = channelsSub.filter(item => item.channel_id !== id);
-            dispatch(setChannelsSub(newChannelSub));
+            setMessage("Log in to subscribe this channel")
         }
 
         try {
@@ -168,8 +178,16 @@ const Channel = ({ }) => {
             console.error(error);
         }
     };
-
-      console.log("subscriber",channelsSub);
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setMessage("");
+        }, 1000);
+    
+        return () => {
+          clearTimeout(timeout);
+        };
+      }, [message])
+    console.log("subscriber", channelsSub);
     return (
         <div className="pt-20 px-9 bg-yt-black min-h-screen h-[calc(100%-53px)] w-full text-yt-white">
             <div className='flex justify-between ml-32 mr-10 items-center'>
@@ -237,7 +255,7 @@ const Channel = ({ }) => {
 
             {videoCount > 0
                 ? isChoice == 2
-                    ? <div className="ml-32 mr-10 pt-2 px-5 grid grid-cols-ch gap-x-5 gap-y-8 mt-6">
+                    ? <div className="ml-32 mr-10 pt-2 px-5 grid grid-cols-ch gap-x-5 gap-y-8 my-6">
                         {videosBelongToChannel?.map((video, i) => (
                             <div className="flex max-w-[200px] h-[200px]">
                                 <VideoComp
@@ -255,7 +273,7 @@ const Channel = ({ }) => {
                             </div>
                         ))}
                     </div>
-                    : <div className="ml-32 mr-10 pt-2 flex flex-col gap-x-5 gap-y-2 mt-6">
+                    : <div className="ml-32 mr-10 pt-2 flex flex-col gap-x-5 gap-y-2 my-6">
                         <div className='flex justify-between gap-5 w-full'>
                             <div className="flex justify-center items-center w-[500px] h-[280px]">
                                 <ReactPlayer url={videoHome?.videoURL} controls playing={true}
@@ -267,7 +285,6 @@ const Channel = ({ }) => {
                                 <span className='text-yt-gray my-1'>{handleNumber(videoHome?.views)} views • {uploadTime}</span>
                                 <span className='my-1 text-yt-gray text-justify'>{videoHome?.description}</span>
                             </div>
-
                         </div>
                         <span className='font-medium mt-6 pt-2 border-yt-gray border-t-[1px]'>Videos</span>
                         <div className="grid grid-cols-ch gap-x-5 gap-y-8 mt-2 mb-4">
@@ -290,6 +307,16 @@ const Channel = ({ }) => {
             <div className='absolute top-[50%] left-[50%]'>
                 {open && <UploadVideo setOpen={setOpen} user={user} />}
             </div>
+            {message
+        && <div className='w-[100%] h-[100%] bg-overlay-40 flex items-center 
+                justify-center z-30 absolute top-0 bottom-0 left-0 right-0' >
+          <div
+            className='w-fit h-[60px] bg-[#F1F1F1] text-yt-light-2 p-5 fixed bottom-3 rounded-md'
+          >
+            <span className='font-medium'>{message}</span>
+          </div>
+        </div>
+      }
         </div>
 
     )

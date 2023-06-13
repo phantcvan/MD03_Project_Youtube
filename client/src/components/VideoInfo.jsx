@@ -6,13 +6,13 @@ import { FaRegBell } from "react-icons/fa";
 import { handleNumber } from "../static/fn";
 
 
-const VideoInfo = ({ id, channel_id, channelLogo, channelName, setOpen, countLike, countDislike, userAction,
+const VideoInfo = ({ id, channel_id, channelLogo, channelName, setMessage, countLike, countDislike, userAction,
     onLikeClick, onDislikeClick, channelEmail, userEmail, isSubscribe,handleAddSubscribe }) => {
 
 
     // share video --> copy link vào clipboard
     const handleCopy = () => {
-        setOpen(true);
+        setMessage("Link copied to clipboard");
         navigator.clipboard.writeText(`http://localhost:3000/video/${id}`)
             .then(() => {
                 console.log('Link copied to clipboard');

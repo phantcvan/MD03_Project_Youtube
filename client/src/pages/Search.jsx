@@ -72,17 +72,18 @@ const Search = ({ }) => {
   };
 
   function checkMatchingTag(videoId, searchQuery) {
-    const matchingTags = allTags.filter((tag) =>
+    console.log("search",searchQuery.replace(/\s/g, '').toLowerCase());
+    return allTags.some((tag) =>
       tag.video_id === videoId &&
-      tag.tag.toLowerCase().includes(searchQuery.toLowerCase())
+      tag.tag.toLowerCase().includes(searchQuery.replace(/\s/g, '').toLowerCase())
     );
-    return matchingTags.length > 0;
   }
+  
 
   useEffect(() => {
     setMessage("");
     const result = allVideos.filter((video) => {
-      const hasMatchingTitle = video.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const hasMatchingTitle = video.title.toLowerCase().includes(searchQuery.toLowerCase()||searchQuery.replace(/\s/g, '').toLowerCase());
       const hasMatchingTag = checkMatchingTag(video.video_id, searchQuery);
       return hasMatchingTitle || hasMatchingTag;
     })

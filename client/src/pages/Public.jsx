@@ -18,12 +18,12 @@ const Public = () => {
     return (
         <div className=''>
             <Navbar setShowMenu={toggleShowMenu} />
+                {/* <Scrollbars autoHide style={{ width: '100%', height: '100%', overflow: "hidden" }}> */}
             <div className='flex flex-auto relative'>
                 {showMenu && <Sidebar />}
-                {/* <Scrollbars autoHide style={{ width: '100%', height: '100%', overflow: "hidden" }}> */}
                     <Outlet />
-                {/* </Scrollbars> */}
             </div>
+                {/* </Scrollbars> */}
         </div>
     )
 }

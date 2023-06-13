@@ -31,16 +31,16 @@ const Video = ({ }) => {
   const [countLike, setCountLike] = useState(0);
   const [countDislike, setCountDislike] = useState(0);
   const [userAction, setUserAction] = useState(-1);
-  const [open, setOpen] = useState(false);
   const [existCmt, setExistCmt] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
   const [subscribes, setSubscribes] = useState([]);
   const [isSubscribe, setIsSubscribe] = useState(false);
+  const [message, setMessage] = useState("");
   const showMenu = useSelector(getShowMenu);
   const dispatch = useDispatch();
   const user = useSelector(getUser);
-  const showLogIn=useSelector(getShowLogIn);
-    const currentUser = useSelector(getCurrentUser);
+  const showLogIn = useSelector(getShowLogIn);
+  const currentUser = useSelector(getCurrentUser);
   // const videos = useSelector(getVideos);
   const searchQuery = useSelector(getSearchQuery);
   // const allTags = useSelector(getAllTags);
@@ -76,13 +76,13 @@ const Video = ({ }) => {
   // Sau 1s thì đóng snackbar
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setOpen(false);
+      setMessage("");
     }, 1000);
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [open])
+  }, [message])
 
   const videoTag = allTags?.find(tag => tag.video_id == id)?.tag;
   const videoTags = allTags?.filter(tag => tag.video_id == id);
@@ -137,11 +137,14 @@ const Video = ({ }) => {
       setComments(commentsResponse.data.findCmt);
       updateView(videoResponse.data.findVideo[0].views);
       setSubscribes(subscribesResponse.data.subscribes);
-      setIsSubscribe(subscribesResponse.data.subscribes.some(item => item.channel_id === videoResponse.data.findVideo[0].channel_id &&
-        item.email === user.email))
+      console.log("actionsResponse", actionsResponse.data.actions);
+      if (user) {
+        setIsSubscribe(subscribesResponse.data.subscribes.some(item => item.channel_id === videoResponse.data.findVideo[0].channel_id &&
+          item.email === user?.email))
+        setUserAction(actionsResponse.data.actions.find(action => action.email === user?.email).action)
+      }
       setCountLike(actionsResponse.data.actions.filter(action => action.action === 1).length);
       setCountDislike(actionsResponse.data.actions.filter(action => action.action === 0).length);
-      setUserAction(actionsResponse.data.actions.find(action => action.email === user.email).action)
     } catch (error) {
       console.error(error);
     }
@@ -203,55 +206,64 @@ const Video = ({ }) => {
 
   // Tăng - giảm like khi click
   const handleLikeClick = async () => {
-    try {
-      if (userAction === -1) {
-        const newAction = {
-          email: user.email,
-          video_id: id,
-          action: 1,
+    if (user) {
+      try {
+        if (userAction === -1) {
+          const newAction = {
+            email: user.email,
+            video_id: id,
+            action: 1,
+          }
+          await axios.post(`http://localhost:8000/api/v1/actions`, newAction)
+          setCountLike(countLike + 1);
+          setUserAction(1);
+        } else if (userAction === 1) {
+          await axios.delete(`http://localhost:8000/api/v1/actions/${id}`, { data: { email: user.email } })
+          setCountLike(countLike - 1);
+          setUserAction(-1);
+        } else {
+          await axios.put(`http://localhost:8000/api/v1/actions/${id}`, { email: user.email, action: 1 })
+          setCountLike(countLike + 1);
+          setCountDislike(countDislike - 1);
+          setUserAction(1);
         }
-        await axios.post(`http://localhost:8000/api/v1/actions`, newAction)
-        setCountLike(countLike + 1);
-        setUserAction(1);
-      } else if (userAction === 1) {
-        await axios.delete(`http://localhost:8000/api/v1/actions/${id}`, { data: { email: user.email } })
-        setCountLike(countLike - 1);
-        setUserAction(-1);
-      } else {
-        await axios.put(`http://localhost:8000/api/v1/actions/${id}`, { email: user.email, action: 1 })
-        setCountLike(countLike + 1);
-        setCountDislike(countDislike - 1);
-        setUserAction(1);
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+
+    } else {
+      setMessage("Log in to like this video");
     }
   };
   // Tăng - giảm dislike khi click
   const handleDislikeClick = async () => {
-    try {
-      if (userAction === -1) {
-        const newAction = {
-          email: user.email,
-          video_id: id,
-          action: 0,
-        }
-        await axios.post(`http://localhost:8000/api/v1/actions`, newAction)
-        setCountDislike(countDislike + 1);
-        setUserAction(0);
-      } else if (userAction === 0) {
-        await axios.delete(`http://localhost:8000/api/v1/actions/${id}`, { data: { email: user.email } })
-        setCountDislike(countDislike - 1);
-        setUserAction(-1);
-      } else {
-        await axios.put(`http://localhost:8000/api/v1/actions/${id}`, { email: user.email, action: 0 })
-        setCountLike(countLike - 1);
-        setCountDislike(countDislike + 1);
-        setUserAction(0);
+    if (user) {
+      try {
+        if (userAction === -1) {
+          const newAction = {
+            email: user.email,
+            video_id: id,
+            action: 0,
+          }
+          await axios.post(`http://localhost:8000/api/v1/actions`, newAction)
+          setCountDislike(countDislike + 1);
+          setUserAction(0);
+        } else if (userAction === 0) {
+          await axios.delete(`http://localhost:8000/api/v1/actions/${id}`, { data: { email: user.email } })
+          setCountDislike(countDislike - 1);
+          setUserAction(-1);
+        } else {
+          await axios.put(`http://localhost:8000/api/v1/actions/${id}`, { email: user.email, action: 0 })
+          setCountLike(countLike - 1);
+          setCountDislike(countDislike + 1);
+          setUserAction(0);
 
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+    } else {
+      setMessage("Log in to dislike this video");
     }
   };
   // console.log("countLike", countLike, "countDislike", countDislike, "userAction", userAction);
@@ -311,35 +323,37 @@ const Video = ({ }) => {
   }
 
   const handleAddSubscribe = async () => {
-    const currentDate = getCurrentDate();
-
-    let request;
-    let successMessage;
-
-    if (!isSubscribe) {
-      request = axios.post('http://localhost:8000/api/v1/subscribes', {
-        email: user?.email,
-        channel_id: channel_id,
-        dateSubs: currentDate
-      });
-      successMessage = 'Thêm subscribe thành công';
-    } else {
-      console.log(channel_id);
-      request = axios.delete(`http://localhost:8000/api/v1/subscribes/${channel_id}`, {
-        data: { email: user?.email }
-      });
-      successMessage = 'Delete subscribe thành công';
-    }
-
-    try {
-      const response = await request;
-      if (response.data.status === 200) {
-        console.log(successMessage);
-        fetchDataChangeId();
+    if (user) {
+      const currentDate = getCurrentDate();
+      let request;
+      let successMessage;
+      if (!isSubscribe) {
+        request = axios.post('http://localhost:8000/api/v1/subscribes', {
+          email: user?.email,
+          channel_id: channel_id,
+          dateSubs: currentDate
+        });
+        successMessage = 'Thêm subscribe thành công';
+      } else {
+        console.log(channel_id);
+        request = axios.delete(`http://localhost:8000/api/v1/subscribes/${channel_id}`, {
+          data: { email: user?.email }
+        });
+        successMessage = 'Delete subscribe thành công';
       }
-    } catch (error) {
-      // Xử lý lỗi một cách phù hợp
-      console.error(error);
+
+      try {
+        const response = await request;
+        if (response.data.status === 200) {
+          console.log(successMessage);
+          fetchDataChangeId();
+        }
+      } catch (error) {
+        // Xử lý lỗi một cách phù hợp
+        console.error(error);
+      }
+    } else {
+      setMessage("Log in to subscribe this video");
     }
   };
 
@@ -358,7 +372,7 @@ const Video = ({ }) => {
         <div className="flex w-[100%]">
           <VideoInfo
             id={id} channel_id={channel_id} channelLogo={channelLogo} channelName={channelName}
-            setOpen={setOpen} countLike={countLike} countDislike={countDislike} userAction={userAction}
+            setMessage={setMessage} countLike={countLike} countDislike={countDislike} userAction={userAction}
             onLikeClick={handleLikeClick} onDislikeClick={handleDislikeClick}
             channelEmail={channelEmail} userEmail={user?.email} isSubscribe={isSubscribe}
             handleAddSubscribe={handleAddSubscribe}
@@ -372,7 +386,7 @@ const Video = ({ }) => {
             </p>
             <p className="font-medium pr-3 my-2">{uploadTime}</p>
           </div>
-          <span className="text-center font-medium">{data?.description}</span>
+          <span className="text-center font-normal">{data?.description}</span>
         </div>
         <div className="text-yt-white mt-5">
           {tagFound
@@ -383,7 +397,7 @@ const Video = ({ }) => {
             :
             <>
               <div className="flex items-center">
-                <h1>{comments.length} Comments</h1>
+                <h1>{comments.length} {comments.length>1?"Comments":"Comment"}</h1>
               </div>
 
               {user && (
@@ -443,13 +457,13 @@ const Video = ({ }) => {
           })}
         </div>
       </div>
-      {open
+      {message
         && <div className='w-[100%] h-[100%] bg-overlay-40 flex items-center 
                 justify-center z-30 absolute top-0 bottom-0 left-0 right-0' >
           <div
             className='w-fit h-[60px] bg-[#F1F1F1] text-yt-light-2 p-5 fixed bottom-3 rounded-md'
           >
-            <span>Link copied to clipboard</span>
+            <span className='font-medium'>{message}</span>
           </div>
         </div>
       }

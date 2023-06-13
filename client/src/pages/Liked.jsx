@@ -138,9 +138,7 @@ const Liked = () => {
             </Scrollbars>
           </div>
         </>
-        : <span> You have not liked any video</span>}
-
-
+        : <span className='text-center text-2xl mt-16 text-yt-white'> You have not liked any video</span>}
     </div >
   );
 };

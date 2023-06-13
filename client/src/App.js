@@ -8,6 +8,7 @@ import Liked from "./pages/Liked";
 import Search from "./pages/Search";
 import UploadVideo from "./components/UploadVideo";
 import Subscription from "./pages/Subscription";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -21,7 +22,9 @@ function App() {
             <Route path="/subscription" element={<Subscription />} />
             <Route path="/likedVideos" element={<Liked />} />
             <Route path="/search" element={<Search />} />
+
           </Route>
+            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </>

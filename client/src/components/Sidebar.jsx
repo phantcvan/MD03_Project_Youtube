@@ -66,7 +66,7 @@ const Sidebar = ({ setShowMenu }) => {
         && <div className="px-3">
           <hr className="text-yt-light-black my-2" />
           <div className="mb-4 ">
-            <span className="my-2">Sign in to like videos, comment, and subscribe.</span>
+            <span className="my-2 text-justify">Sign in to like videos, comment, and subscribe.</span>
             <div className="my-2 border border-yt-light-black w-fit rounded-xl">
               <button
                 className=" text-[#37A6FF] py-2 px-4"
