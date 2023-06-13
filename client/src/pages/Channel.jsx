@@ -5,7 +5,7 @@ import {
     getAllChannels, setAllChannels, getCurrentUser, setCurrentUser,
     getChannelsSub, setChannelsSub
 } from '../slices/channelSlice';
-import { getUser, setUser } from "../slices/userSlice";
+import { getUser, setUser, getShowMenu, setShowMenu, getShowLogIn, setShowLogIn } from "../slices/userSlice";
 import { useParams } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 import { FaRegBell } from "react-icons/fa";
@@ -42,6 +42,8 @@ const Channel = ({ }) => {
     const [subscriber, setSubscriber] = useState(0); //số người đăng ký
     const [isSubscribe, setIsSubscribe] = useState(false);
     const channelsSub = useSelector(getChannelsSub); //các kênh đăng ký
+    const showMenu=useSelector(getShowMenu);
+    const showLogIn=useSelector(getShowLogIn);
 
     const fetchData = async () => {
         try {
@@ -56,11 +58,12 @@ const Channel = ({ }) => {
             setChannelNow(channelResponse.data.findChannel);
             setVideoCount(videosResponse.data.videoBelongChannel.length);
             setVideoHome(videosResponse.data.videoBelongChannel?.sort((a, b) => b.views - a.views)[0]);
-            setUploadTime(new Date(videoHome?.upload_date).toLocaleDateString('en-GB'));
+            setUploadTime(new Date(videosResponse.data.videoBelongChannel?.sort((a, b) => b.views - a.views)[0]?.upload_date).toLocaleDateString('en-GB'));
             setSubscriber(subscriberResponse.data.subscribes?.length);
-            console.log("suber", subscriberResponse.data.subscribes);
             setIsSubscribe(subscriberResponse.data.subscribes.some(item => item.email === user?.email))
             dispatch(setAllChannels(allChannelResponse.data.channels));
+            dispatch(setShowMenu(false));
+            dispatch(setShowLogIn(false));
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     dispatch(setUser(user));
@@ -121,10 +124,6 @@ const Channel = ({ }) => {
             console.error(error);
         }
     };
-    // console.log('channelNow', channelNow[0]);
-
-    // console.log("videosBelongToChannel", videosBelongToChannel);
-    // console.log(canEdit);
 
     const getCurrentDate = () => {
         const currentDate = new Date();
@@ -146,7 +145,7 @@ const Channel = ({ }) => {
                 dateSubs: currentDate
             });
             successMessage = 'Thêm subscribe thành công';
-            newChannelSub = [...channelsSub, channelNow];
+            newChannelSub = [...channelsSub, channelNow[0]];
             dispatch(setChannelsSub(newChannelSub));
         } else {
             console.log(id);
@@ -170,7 +169,7 @@ const Channel = ({ }) => {
         }
     };
 
-    //   console.log("subscriber",subscriber);
+      console.log("subscriber",channelsSub);
     return (
         <div className="pt-20 px-9 bg-yt-black min-h-screen h-[calc(100%-53px)] w-full text-yt-white">
             <div className='flex justify-between ml-32 mr-10 items-center'>
@@ -265,8 +264,8 @@ const Channel = ({ }) => {
                             </div>
                             <div className='flex flex-1 flex-col'>
                                 <span className='my-1 font-medium text-justify'>{videoHome?.title}</span>
-                                <span className='my-1'>{handleNumber(videoHome?.views)} views • {uploadTime}</span>
-                                <span className='my-1 font-medium text-justify'>{videoHome?.description}</span>
+                                <span className='text-yt-gray my-1'>{handleNumber(videoHome?.views)} views • {uploadTime}</span>
+                                <span className='my-1 text-yt-gray text-justify'>{videoHome?.description}</span>
                             </div>
 
                         </div>

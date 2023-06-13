@@ -4,7 +4,7 @@ import Home from "./pages/Home";
 import Video from "./pages/Video";
 import Channel from "./pages/Channel";
 import Public from "./pages/Public";
-import History from "./pages/History";
+import Liked from "./pages/Liked";
 import Search from "./pages/Search";
 import UploadVideo from "./components/UploadVideo";
 import Subscription from "./pages/Subscription";
@@ -19,7 +19,7 @@ function App() {
             <Route path="/video/:id" element={<Video />} />
             <Route path="/channel/:id" element={<Channel />} />
             <Route path="/subscription" element={<Subscription />} />
-            <Route path="/history" element={<History />} />
+            <Route path="/likedVideos" element={<Liked />} />
             <Route path="/search" element={<Search />} />
           </Route>
         </Routes>

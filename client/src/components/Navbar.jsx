@@ -10,21 +10,22 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
-import { setUser, getUser, logout } from "../slices/userSlice";
+import { setUser, getUser, logout, setShowLogIn, getShowLogIn } from "../slices/userSlice";
 import { setSearchQuery } from "../slices/videoSlice";
 import UploadVideo from "./UploadVideo";
 import { createSearchParams } from 'react-router-dom';
-import { getAllChannels, getCurrentUser} from '../slices/channelSlice';
+import { getAllChannels, getCurrentUser } from '../slices/channelSlice';
 
 const Navbar = ({ setShowMenu }) => {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dispatch = useDispatch();
   const user = useSelector(getUser);
   const allChannels = useSelector(getAllChannels);
   const currentUser = useSelector(getCurrentUser);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const showLogIn = useSelector(getShowLogIn);
 
   // Search
   const handleSearch = () => {
@@ -50,14 +51,18 @@ const Navbar = ({ setShowMenu }) => {
 
   const handleLogout = async () => {
     dispatch(logout());
-    setIsDropdownOpen(false)
+    dispatch(setShowLogIn(false));
     await signOut(auth);
   };
 
   const handleDropdownToggle = () => {
-    setIsDropdownOpen(!isDropdownOpen);
+    showLogIn == false ? dispatch(setShowLogIn(true)) : dispatch(setShowLogIn(false));
+
   };
-  const channel_id = allChannels?.find(channel => channel.email === user?.email)?.channel_id;
+  let channel_id = ""
+  if (user != null) {
+    channel_id = allChannels?.find(channel => channel.email === user?.email)?.channel_id;
+  }
   // const handleYourChannelClick = () => {
   //   // Thực hiện chuyển hướng đến trang @username
   //   window.location.href = `/channel/${channelId}`;
@@ -81,8 +86,8 @@ const Navbar = ({ setShowMenu }) => {
             </div>
           </div>
 
-          <div className="h-10 flex flex-row items-center">
-            <div className="w-[593px] bg-yt-black flex border border-yt-light-black items-center rounded-3xl h-10">
+          <div className="h-10 flex flex-row items-center basis-2/3 justify-between m-auto">
+            <div className="w-[90%] bg-yt-black flex border border-yt-light-black items-center justify-between rounded-3xl h-10">
               <input
                 type="text"
                 placeholder="Search"
@@ -131,12 +136,12 @@ const Navbar = ({ setShowMenu }) => {
                       onClick={handleDropdownToggle}
                       className="object-contain rounded-full cursor-pointer w-10 h-10"
                     />
-                    {isDropdownOpen && (
+                    {showLogIn && (
                       <div className="dropdown absolute mt-2 bg-[#282828] rounded-md shadow-lg right-[10px]">
                         <ul className="py-1">
                           <Link to={`/channel/${channel_id}`}>
                             <li className="px-4 py-2 hover:bg-gray-200 cursor-pointer text-yt-white"
-                            onClick={()=>setIsDropdownOpen(false)}>
+                              onClick={() => dispatch(setShowLogIn(false))}>
                               <span className="flex items-center gap-2"><BsPersonCircle size={20} /> Your Channel</span>
                             </li>
                           </Link>
@@ -165,7 +170,7 @@ const Navbar = ({ setShowMenu }) => {
         </div> */}
 
       </div>
-      {open && <UploadVideo setOpen={setOpen} user={user}/>}
+      {open && <UploadVideo setOpen={setOpen} user={user} />}
     </>
   );
 };

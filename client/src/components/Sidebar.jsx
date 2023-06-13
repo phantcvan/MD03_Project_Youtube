@@ -11,7 +11,7 @@ import { AiFillChrome, AiFillHome } from "react-icons/ai";
 
 
 
-const Sidebar = () => {
+const Sidebar = ({ setShowMenu }) => {
   const [active, setActive] = useState("Home");
   const dispatch = useDispatch();
   const user = useSelector(getUser);
@@ -78,7 +78,7 @@ const Sidebar = () => {
           </div>
         </div>
       }
-      {sidebar.SideBarItems.Subscriptions.length > 0
+      {user && sidebar.SideBarItems.Subscriptions.length > 0
         && <div>
           <hr className="text-yt-light-black my-2" />
           <h2 className="py-2 px-3">Subscriptions</h2>

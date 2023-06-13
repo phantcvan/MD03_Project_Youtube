@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useDebugValue, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { getCurrentUser } from '../slices/channelSlice';
-import { useSelector } from "react-redux";
+import { getShowMenu, setShowMenu } from '../slices/userSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { Scrollbars } from 'react-custom-scrollbars-2';
 
 const Public = () => {
-    const [showMenu, setShowMenu] = useState(false);
+    const showMenu = useSelector(getShowMenu);
+    const dispatch = useDispatch();
     // const currentUser = useSelector(getCurrentUser);
 
     const toggleShowMenu = () => {
-        setShowMenu(!showMenu);
+        dispatch(setShowMenu(!showMenu));
     };
 
     return (
@@ -18,7 +20,9 @@ const Public = () => {
             <Navbar setShowMenu={toggleShowMenu} />
             <div className='flex flex-auto relative'>
                 {showMenu && <Sidebar />}
-                    <Outlet setShowMenu={setShowMenu}/>
+                {/* <Scrollbars autoHide style={{ width: '100%', height: '100%', overflow: "hidden" }}> */}
+                    <Outlet />
+                {/* </Scrollbars> */}
             </div>
         </div>
     )

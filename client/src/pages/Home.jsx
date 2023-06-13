@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { CategoryItems } from "../static/data";
-import { getUser, setUser } from "../slices/userSlice";
+import { getUser, setUser, getShowMenu, setShowMenu, setShowLogIn, getShowLogIn } from "../slices/userSlice";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { Link } from "react-router-dom";
@@ -12,7 +12,9 @@ import axios from "axios";
 import { setVideos, getVideos, setAllTags, getAllTags, getNewVideo } from '../slices/videoSlice';
 import {
   setAllChannels, getAllChannels, setCurrentUser, getCurrentUser, getChannelsSub,
-  setChannelsSub} from '../slices/channelSlice';
+  setChannelsSub
+} from '../slices/channelSlice';
+import { Scrollbars } from 'react-custom-scrollbars-2';
 
 
 const Home = ({ }) => {
@@ -28,28 +30,27 @@ const Home = ({ }) => {
   const allChannels = useSelector(getAllChannels);
   const currentUser = useSelector(getCurrentUser);
   const channelsSub = useSelector(getChannelsSub);
+  const showMenu = useSelector(getShowMenu);
+  const showLogIn = useSelector(getShowLogIn);
 
+  // Khi không có user
   const fetchData = async () => {
     try {
-      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse, subscribesResponse] = await Promise.all([
+      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse] = await Promise.all([
         axios.get('http://localhost:8000/api/v1/tags'),
         axios.get('http://localhost:8000/api/v1/videos/list_tags'),
         axios.get('http://localhost:8000/api/v1/videos'),
         axios.get('http://localhost:8000/api/v1/channels'),
-        axios.get(`http://localhost:8000/api/v1/subscribes/all/${user?.email}`),
       ]);
 
       const tagsWithAll = tagsResponse.data.tags;
       tagsWithAll.unshift({ tag: 'All' });
       setTags(tagsWithAll);
-      const subscribedChannels = allChannels.filter(channel => {
-        return subscribesResponse.data.subscribes.some(subscribe => subscribe.channel_id === channel.channel_id);
-    });
-    dispatch(setChannelsSub(subscribedChannels));
       dispatch(setAllTags(allTagsResponse.data.tags));
-      dispatch(setVideos(videosResponse.data.videos))
-      // setChannels(channelsResponse.data.channels);
-      dispatch(setAllChannels(channelsResponse.data.channels))
+      dispatch(setVideos(videosResponse.data.videos));
+      dispatch(setAllChannels(channelsResponse.data.channels));
+      dispatch(setShowMenu(false));
+      dispatch(setShowLogIn(false));
 
       onAuthStateChanged(auth, (user) => {
         if (user) {
@@ -63,12 +64,33 @@ const Home = ({ }) => {
       console.error(error);
     }
   };
+  // khi có user
+  const fetchDataSubs = async () => {
+    try {
+      const [subscribesResponse] = await Promise.all([
+        axios.get(`http://localhost:8000/api/v1/subscribes/all/${user?.email}`),
+      ]);
+      const subscribedChannels = allChannels.filter(channel => {
+        return subscribesResponse.data.subscribes.some(subscribe => subscribe.channel_id === channel.channel_id);
+      });
+      dispatch(setChannelsSub(subscribedChannels));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    if (user != null) {
+      fetchDataSubs();
+    }
   }, []);
   useEffect(() => {
     fetchData();
-  }, [newVideo]);
+    if (user != null) {
+      fetchDataSubs();
+    }
+  }, [newVideo, user]);
 
 
   function generateRandomChannelId() {
@@ -132,7 +154,7 @@ const Home = ({ }) => {
 
   return (
     <>
-      <div className="w-full min-h-screen h-[calc(100%-53px)] pt-20 bg-yt-black pl-20 scrollbar-hide"  >
+      <div className="w-full min-h-screen h-[calc(100%-53px)] pt-20 bg-yt-black pl-20 yt-scrollbar scrollbar-hide overflow-scroll"  >
         <div className="flex flex-row px-3 overflow-x-scroll relative scrollbar-hide mb-3">
           {tags?.map((item, i) => (
             <span
@@ -145,26 +167,26 @@ const Home = ({ }) => {
             </span>
           ))}
         </div>
-
-        <div className="pt-2 px-5 grid grid-cols-yt gap-x-5 gap-y-8 my-5 ">
-          {videosTag?.map((video, i) => (
-            <div className="w-[360px]" key={i}>
-              <VideoComp
-                video_id={video.video_id}
-                channel_id={video.channel_id}
-                upload_date={video.upload_date}
-                views={video.views}
-                title={video.title}
-                thumbnail={video.thumbnail}
-                allChannels={allChannels}
-                h="202px"
-                w="360px"
-                channelDisplay
-              />
-            </div>
-          ))}
-        </div>
-
+        {/* <Scrollbars style={{ width: '100%', overflow: "hidden" }}> */}
+          <div className="flex flex-wrap pt-2 px-5 gap-x-5 gap-y-8 my-5 ">
+            {videosTag?.map((video, i) => (
+              <div className="w-[360px]" key={i}>
+                <VideoComp
+                  video_id={video.video_id}
+                  channel_id={video.channel_id}
+                  upload_date={video.upload_date}
+                  views={video.views}
+                  title={video.title}
+                  thumbnail={video.thumbnail}
+                  allChannels={allChannels}
+                  h="202px"
+                  w="360px"
+                  channelDisplay
+                />
+              </div>
+            ))}
+          </div>
+        {/* </Scrollbars> */}
 
 
       </div>

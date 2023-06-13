@@ -5,21 +5,20 @@ import { auth, db, timestamp } from "../firebase";
 // import { HiDotsHorizontal, HiDownload } from "react-icons/hi";
 import { MdOutlineSort } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { getUser, setUser } from "../slices/userSlice";
+import { getUser, setUser, getShowMenu, setShowMenu, getShowLogIn, setShowLogIn } from "../slices/userSlice";
 import { onAuthStateChanged } from "firebase/auth";
 import Comment from "../components/Comment";
 import { CategoryItems } from "../static/data";
 import RecommendVideo from "../components/RecommendVideo";
 import axios from "axios";
 import ReactPlayer from 'react-player';
-import { incrementView } from '../slices/videoSlice';
-import { getAllTags, getVideos, getSearchQuery } from '../slices/videoSlice';
+import { getAllTags, getVideos, getSearchQuery, incrementView } from '../slices/videoSlice';
 import { setCurrentUser, getAllChannels, getCurrentUser } from '../slices/channelSlice';
 import VideoInfo from "../components/VideoInfo";
 
 
 
-const Video = () => {
+const Video = ({ }) => {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [comment, setComment] = useState("");
@@ -37,11 +36,11 @@ const Video = () => {
   const [checkEmail, setCheckEmail] = useState(false);
   const [subscribes, setSubscribes] = useState([]);
   const [isSubscribe, setIsSubscribe] = useState(false);
-  // const [channelNow, setChannelNow] = useState([]);
+  const showMenu = useSelector(getShowMenu);
   const dispatch = useDispatch();
   const user = useSelector(getUser);
-  // const allChannels = useSelector(getAllChannels);
-  const currentUser = useSelector(getCurrentUser);
+  const showLogIn=useSelector(getShowLogIn);
+    const currentUser = useSelector(getCurrentUser);
   // const videos = useSelector(getVideos);
   const searchQuery = useSelector(getSearchQuery);
   // const allTags = useSelector(getAllTags);
@@ -64,6 +63,9 @@ const Video = () => {
       setVideos(videosResponse.data.videos);
       setAllChannels(channelsResponse.data.channels);
       setComments(commentsResponse.data.findCmt);
+      dispatch(setShowMenu(false));
+      dispatch(setShowLogIn(false));
+
     } catch (error) {
       console.error(error);
     }
@@ -310,10 +312,10 @@ const Video = () => {
 
   const handleAddSubscribe = async () => {
     const currentDate = getCurrentDate();
-    
+
     let request;
     let successMessage;
-    
+
     if (!isSubscribe) {
       request = axios.post('http://localhost:8000/api/v1/subscribes', {
         email: user?.email,
@@ -328,7 +330,7 @@ const Video = () => {
       });
       successMessage = 'Delete subscribe thành công';
     }
-  
+
     try {
       const response = await request;
       if (response.data.status === 200) {
@@ -340,7 +342,7 @@ const Video = () => {
       console.error(error);
     }
   };
-  
+
 
   return (
     <div className="py-12 px-9 bg-yt-black relative flex flex-row min-h-screen h-[calc(100%-53px)] w-[100%] mt-10 gap-8">

@@ -33,11 +33,13 @@ const VideoInfo = ({ id, channel_id, channelLogo, channelName, setOpen, countLik
                             <img src={channelLogo} alt="" className="h-9 w-9 rounded-full" />
                         </Link>
                     </div>
+                    <Link to={`/channel/${channel_id}`}>
                     <h3 className="text-yt-white font-medium text-base">
                         {channelName && channelName.length <= 25
                             ? channelName
                             : `${channelName && channelName.substr(0, 20)}...`}
                     </h3>
+                    </Link>
                     {channelEmail !== userEmail
                         ? isSubscribe
                             ? <button className="bg-yt-light-2 text-yt-white flex px-3 py-2 rounded-lg text-sm font-medium"

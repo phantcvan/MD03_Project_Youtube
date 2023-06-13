@@ -33,7 +33,7 @@ const RecommendVideo = ({ thumbnail, title, views, upload_date, channel_id, allC
       </div>
       <div className="pl-2 flex-1">
         <h2 className="text-sm font-medium">
-          {title.length <= 70 ? title : `${title.substr(0, 60)}...`}
+          {title.length <= 60 ? title : `${title.substr(0, 60)}...`}
         </h2>
         <Link to={`/channel/${channel_id}`}>
           <div className="flex my-2 gap-2 items-center">
