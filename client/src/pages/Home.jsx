@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { CategoryItems } from "../static/data";
-import { getUser, setUser, getShowMenu, setShowMenu, setShowLogIn, getShowLogIn } from "../slices/userSlice";
+import { getShowMenu, setShowMenu, getShowLogIn, setShowLogIn, getCurrentWidth } from "../slices/appSlice";
+import { getUser, setUser } from "../slices/userSlice";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { Link } from "react-router-dom";
@@ -32,6 +33,9 @@ const Home = ({ }) => {
   const channelsSub = useSelector(getChannelsSub);
   const showMenu = useSelector(getShowMenu);
   const showLogIn = useSelector(getShowLogIn);
+  const curWid = useSelector(getCurrentWidth);
+
+  console.log(curWid);
 
   // Khi không có user
   const fetchData = async () => {
@@ -154,11 +158,12 @@ const Home = ({ }) => {
 
   return (
     <>
-      <div className="w-full min-h-screen h-[calc(100%-53px)] pt-20 bg-yt-black pl-20 yt-scrollbar scrollbar-hide overflow-scroll"  >
+      <div className={`w-full min-h-screen h-[calc(100%-53px)] bg-yt-black 
+      ${curWid <= 480 ? "pt-16 pl-6" : curWid <= 1024 ? "pt-16 pl-12" : "pt-20 pl-20"}`}  >
         <div className="flex flex-row px-3 overflow-x-scroll relative scrollbar-hide mb-3">
           {tags?.map((item, i) => (
             <span
-              className={`font-medium text-sm py-2 px-4 mr-3 cursor-pointer rounded-lg w-fit
+              className={`font-medium ${curWid <= 480 ? "text-xs py-1" : "text-sm py-2"} px-4 mr-3 cursor-pointer rounded-lg w-fit
             ${isChoice == item.tag ? "text-yt-black bg-yt-white" : "text-yt-white bg-yt-light hover:bg-yt-light-1 "}`}
               key={i}
               onClick={() => setIsChoice(item.tag)}
@@ -168,24 +173,27 @@ const Home = ({ }) => {
           ))}
         </div>
         {/* <Scrollbars style={{ width: '100%', overflow: "hidden" }}> */}
-          <div className="flex flex-wrap pt-2 px-5 gap-x-5 gap-y-8 my-5 ">
-            {videosTag?.map((video, i) => (
-              <div className="w-[360px]" key={i}>
-                <VideoComp
-                  video_id={video.video_id}
-                  channel_id={video.channel_id}
-                  upload_date={video.upload_date}
-                  views={video.views}
-                  title={video.title}
-                  thumbnail={video.thumbnail}
-                  allChannels={allChannels}
-                  h="202px"
-                  w="360px"
-                  channelDisplay
-                />
-              </div>
-            ))}
-          </div>
+        <div className={`flex flex-wrap pt-2 
+          ${curWid <= 480 ? "gap-x-3 gap-y-3 my-3 px-3" : curWid <= 1024
+            ? "gap-x-4 gap-y-4 my-4 px-4" : "gap-x-5 gap-y-5 my-5 px-5"}`}>
+          {videosTag?.map((video, i) => (
+            <div className={`${curWid <= 480 ? "w-[150px]" : curWid <= 1024 ? "w-[230px]" : "w-[360px]"}`} key={i}>
+              <VideoComp
+                video_id={video.video_id}
+                channel_id={video.channel_id}
+                upload_date={video.upload_date}
+                views={video.views}
+                videoURL={video.videoURL}
+                title={video.title}
+                thumbnail={video.thumbnail}
+                allChannels={allChannels}
+                h={`${curWid <= 480 ? "84px" : curWid <= 1024 ? "129px" : "202px"}`}
+                w={`${curWid <= 480 ? "150px" : curWid <= 1024 ? "230px" : "360px"}`}
+                channelDisplay
+              />
+            </div>
+          ))}
+        </div>
         {/* </Scrollbars> */}
 
 

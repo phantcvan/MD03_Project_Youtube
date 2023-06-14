@@ -10,7 +10,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, provider } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
-import { setUser, getUser, logout, setShowLogIn, getShowLogIn } from "../slices/userSlice";
+import { setUser, getUser, logout, } from "../slices/userSlice";
+import {setShowLogIn, getShowLogIn, getCurrentWidth } from "../slices/appSlice";
 import { setSearchQuery } from "../slices/videoSlice";
 import UploadVideo from "./UploadVideo";
 import { createSearchParams } from 'react-router-dom';
@@ -26,16 +27,19 @@ const Navbar = ({ setShowMenu }) => {
   const currentUser = useSelector(getCurrentUser);
   const [searchKeyword, setSearchKeyword] = useState('');
   const showLogIn = useSelector(getShowLogIn);
+  const curWid = useSelector(getCurrentWidth);
 
   // Search
   const handleSearch = () => {
-    dispatch(setSearchQuery(searchKeyword));
-    navigate({
-      pathname: `/search`,
-      search: createSearchParams({
-        q: searchKeyword
-      }).toString()
-    })
+    if (searchKeyword.replace(/\s/g, '')) {
+      dispatch(setSearchQuery(searchKeyword));
+      navigate({
+        pathname: `/search`,
+        search: createSearchParams({
+          q: searchKeyword
+        }).toString()
+      })      
+    }
   };
   const handleKeyDown = (e) => {
     if (e.keyCode === 13) {
@@ -63,14 +67,15 @@ const Navbar = ({ setShowMenu }) => {
   if (user != null) {
     channel_id = allChannels?.find(channel => channel.email === user?.email)?.channel_id;
   }
-  // const handleYourChannelClick = () => {
-  //   // Thực hiện chuyển hướng đến trang @username
-  //   window.location.href = `/channel/${channelId}`;
-  // };
+  const handleAddKeyword = (e) => {
+    const keyword = e.target.value;
+    setSearchKeyword(keyword)
+    console.log(keyword);
+  };
 
   return (
     <>
-      <div className="bg-yt-black fixed w-full z-10 pb-2">
+      <div className="bg-yt-black fixed w-[100%] z-10 pb-2">
         <div className="h-14 flex items-center pl-4 pr-5 justify-between ">
           <div className="flex justify-between items-center">
             <div
@@ -79,23 +84,26 @@ const Navbar = ({ setShowMenu }) => {
               onClick={() => setShowMenu(pre => !pre)}>
               <HiOutlineBars3 />
             </div>
-            <div className="py-5 w-32 pr-3">
+            ${curWid >= 1024
+           && <div className="py-5 w-32 pr-3">
               <Link to="/">
                 <img src={logo} alt="" className="object-contain" />
               </Link>
-            </div>
+            </div>}
+            
           </div>
 
-          <div className="h-10 flex flex-row items-center basis-2/3 justify-between m-auto">
-            <div className="w-[90%] bg-yt-black flex border border-yt-light-black items-center 
-            justify-between rounded-3xl h-10">
+          <div className={`h-10 flex flex-row items-center justify-between m-auto
+          ${curWid <= 480 ? "basis-[20%]" : curWid <= 1024 ? "basis-1/2" : "basis-2/3"}`}>
+            <div className={`bg-yt-black flex border border-yt-light-black items-center justify-between rounded-3xl h-10
+            ${curWid <= 480 ? "w-[220px]" : curWid <= 1024 ? "w-[400px]" : "w-[590px]"}`}>
               <div className="rounded-l-3xl hover:border hover:border-[#1C62B9] h-10 w-[100%] flex items-center">
                 <input
                   type="text"
                   placeholder="Search"
                   value={searchKeyword}
                   onKeyDown={(e) => handleKeyDown(e)}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onChange={handleAddKeyword}
                   className="w-full bg-yt-black h-6 ml-6 text-yt-white text-start focus:outline-none pl-4"
                 />
               </div>
@@ -111,8 +119,8 @@ const Navbar = ({ setShowMenu }) => {
               <MdMic className="text-center " size={23} />
             </div> */}
           </div>
-          <div className="flex items-center justify-center">
-            <div className="flex flex-row items-center">
+          <div className="flex items-center flex-1 justify-center">
+            <div className="flex flex-row flex-1 items-center">
               {user &&
                 <div className="mr-2 p-2 w-10 hover:bg-yt-light-black rounded-full cursor-pointer">
                   <BiVideoPlus size={25} className="text-yt-white text-center" onClick={() => setOpen(true)} />
@@ -123,7 +131,7 @@ const Navbar = ({ setShowMenu }) => {
                   <FaRegBell size={20} className="text-center text-yt-white" />
                 </div>
               } */}
-              <div className="mx-3 items-center cursor-pointer">
+              <div className={`${curWid <= 480 ? "" : "mx-3"} items-center cursor-pointer`}>
                 {!user ? (
                   <button
                     className="bg-yt-red py-1 px-4 text-yt-white rounded-md"
@@ -140,7 +148,8 @@ const Navbar = ({ setShowMenu }) => {
                       className="object-contain rounded-full cursor-pointer w-10 h-10"
                     />
                     {showLogIn && (
-                      <div className="dropdown absolute mt-2 bg-[#282828] rounded-md shadow-lg right-[10px]">
+                      <div className={`dropdown absolute mt-2 bg-[#282828] rounded-md shadow-lg right-[10px]
+                      ${curWid <= 480 ? "right-[100px] text-xs" : curWid <= 1024 ? "right-[50px] text-sm" : "right-[10px]"}`}>
                         <ul className="py-1">
                           <Link to={`/channel/${channel_id}`}>
                             <li className="px-4 py-2 hover:bg-gray-200 cursor-pointer text-yt-white"

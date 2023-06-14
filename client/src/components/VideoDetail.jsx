@@ -9,18 +9,20 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 
-const VideoDetail = ({ setOpen, user, videoId, setEdit }) => {
+const VideoDetail = ({ setOpen, user, videoId, setEdited, setOpenMenu, setEdit, setMessageChannel }) => {
     const dispatch = useDispatch();
     const [selectInput, setSelectInput] = useState(0);
     // const [secondStep, setSecondStep] = useState(false);
     // const [selectedVideo, setSelectedVideo] = useState(null);
     const [title, setTitle] = useState("");
+    console.log('title', title);
+    const [newTitle, setNewTitle] = useState("");
     const [imgUrl, setImgUrl] = useState(null);
     const [selectedImg, setSelectedImg] = useState(null);
+    // const [imgURL, setImgURL] = useState(null);
     const [description, setDescription] = useState("");
     const [tag, setTag] = useState(""); //chuỗi tag để update
     const [tags, setTags] = useState([]); //mảng tags
-    // const [tagsEdit, setTagsEdit] = useState([]);
     const [forKid, setForKid] = useState(false);
     const [countText, setCountText] = useState(0);
     const navigate = useNavigate()
@@ -32,30 +34,39 @@ const VideoDetail = ({ setOpen, user, videoId, setEdit }) => {
     // tải về dữ liệu về video
     const loadDataVideo = async () => {
         try {
-          const [tagsResponse, videoResponse] = await Promise.all([
-            axios.get(`http://localhost:8000/api/v1/tags/${videoId}`),
-            axios.get(`http://localhost:8000/api/v1/videos/${videoId}`),
-          ]);
-          setTags(tagsResponse.data.tags);
-        //   setTagsEdit(tagsResponse.data.tags);
-          setTag(tagsResponse.data.tags.map((tag) => tag.tag).join(", "));
-          setTitle(videoResponse.data.findVideo[0].title);
-          setDescription(videoResponse.data.findVideo[0].description);
-          setImgUrl(videoResponse.data.findVideo[0].thumbnail);
-          setCountText(videoResponse.data.findVideo[0].description.length);
-          setForKid(tagsResponse.data.tags.some((tag) => tag.tag === "kid"));
-      
-          const file = await convertImageUrlToFile(videoResponse.data.findVideo[0].thumbnail);
-          setSelectedImg(file);
+            const [tagsResponse, videoResponse] = await Promise.all([
+                axios.get(`http://localhost:8000/api/v1/tags/${videoId}`),
+                axios.get(`http://localhost:8000/api/v1/videos/${videoId}`),
+            ]);
+            setTags(tagsResponse.data.tags.map((obj) => obj.tag));
+            setTag(tagsResponse.data.tags.map((tag) => tag.tag).join(", "));
+            setTitle(videoResponse.data.findVideo[0].title);
+            setDescription(videoResponse.data.findVideo[0].description);
+            setImgUrl(videoResponse.data.findVideo[0].thumbnail);
+            setCountText(videoResponse.data.findVideo[0].description.length);
+            setForKid(tagsResponse.data.tags.some((tag) => tag.tag === "kid"));
+
+            const file = await convertImageUrlToFile(videoResponse.data.findVideo[0].thumbnail);
+            setSelectedImg(file);
         } catch (error) {
-          console.log(error);
+            console.log(error);
         }
-      };
+    };
 
     useEffect(() => {
-        loadDataVideo()
+        loadDataVideo();
     }, [])
-    console.log("img file", selectedImg);
+    // console.log("tags", tags);
+    const handleAddTitle = (e) => {
+        const inputTitle = e.target.value;
+        const inputTitleTrim = e.target.value.replace(/\s+/g, ' ');
+        console.log('inputTitleTrim', inputTitleTrim);
+        if (inputTitleTrim !== " ") {
+            setMessage("");
+            setTitle(inputTitle);
+        }
+    }
+
     // Đổi ảnh từ link -> file
     const convertImageUrlToFile = async (imageUrl) => {
         try {
@@ -71,25 +82,49 @@ const VideoDetail = ({ setOpen, user, videoId, setEdit }) => {
 
     // Khi người dùng đã chọn ảnh
     const handleImgChange = (event) => {
-        setSelectedImg(event.target.files[0]);
-        setMessage("")
+        const ImgFileArr = event.target.files[0].name.split('.');
+        const typeOfImg = ImgFileArr[ImgFileArr.length - 1].toLowerCase();
+        if (typeOfImg === 'png' || typeOfImg === 'jpg' || typeOfImg === 'jpeg' || typeOfImg === 'bmp') {
+            setSelectedImg(event.target.files[0]);
+            setMessage("");
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                setImgUrl(reader.result);
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        } else {
+            console.log(typeOfImg);
+            setMessage('Please select a image in PNG, JPG, JPEG or BMP format.');
+            setSelectedImg(null);
+        }
     };
     // Đếm số ký tự của mô tả
     const handleAddDes = (event) => {
-        const value = event.target.value;
-        setCountText(value.length);
-        setDescription(value);
+        const valueInput = event.target.value;
+        const valueTrim = event.target.value.replace(/\s/g, ' ');
+        if (valueTrim!== " ") {
+            setCountText(valueInput.length);
+            setDescription(valueInput);
+            setMessage("");
+        }
     }
     // thêm tag
     const handleAddTag = (e) => {
-        let value = e.target.value;
-        setTag(value);
-        setTags(value.split(",").map((item) => item.trim()).filter((item) => item !== ""))
-        if (forKid && !value.split(",").includes('kid')) {
-            setTags([...value.split(",").map((item) => item.trim()).filter((item) => item !== ""), 'kid']);
-        } else if (!forKid && tags.includes('kid')) {
-            const newTags = tags.filter((tag) => tag !== 'kid')
-            setTags(newTags)
+        let tagValue = e.target.value.replace(/\s/g, '');
+        if (tagValue) {
+            setMessage("");
+            setTag(e.target.value);
+            setTags(e.target.value.split(",").map((item) => item.trim()).filter((item) => item !== ""))
+            console.log(e.target.value.split(",").map((item) => item.trim()).filter((item) => item !== ""));
+            if (forKid && !tagValue.split(",").includes('kid')) {
+                setTags([...tagValue.split(",").map((item) => item.trim()).filter((item) => item !== ""), 'kid']);
+            } else if (!forKid && tags.includes('kid')) {
+                const newTags = tags.filter((tag) => tag !== 'kid')
+                setTags(newTags)
+            }
         }
     }
     const handleUpdateTagForKid = () => {
@@ -100,8 +135,8 @@ const VideoDetail = ({ setOpen, user, videoId, setEdit }) => {
         setForKid(false);
         if (tags.includes('kid')) setTags(tags.filter((tag) => tag !== 'kid'))
     }
-console.log("tags",tags);
-// console.log("tagsEdit",tagsEdit);
+    // console.log("tags",tags);
+    // console.log("tagsEdit",tagsEdit);
     const deleteTags = async (videoId) => {
         try {
             await axios.delete(`http://localhost:8000/api/v1/tags/${videoId}`);
@@ -118,13 +153,11 @@ console.log("tags",tags);
         } else {
             try {
                 await deleteTags(videoId);
-
                 const formData = new FormData();
                 formData.append("video_id", videoId);
-                formData.append("title", title);
-                formData.append("description", description);
+                formData.append("title", title.replace(/\s+/g, ' '));
+                formData.append("description", description.replace(/\s+/g, ' '));
                 formData.append("thumbnail", selectedImg);
-
                 const updateResponse = await axios.put(`http://localhost:8000/api/v1/videos/${videoId}`, formData);
 
                 if (updateResponse.data.status === 200) {
@@ -136,19 +169,23 @@ console.log("tags",tags);
                     tags: tags
                 });
 
-                console.log(postTagResponse.data);
+                // console.log(postTagResponse.data);
 
                 if (postTagResponse.data.status === 200) {
                     console.log('Update tag thành công');
                     setMessage("");
                     // setSecondStep(true);
+                    setEdited(pre => !pre);
+                    setOpen(false);
                     setEdit(false);
+                    setOpenMenu(false); 
                 }
 
                 if (postTagResponse.data.status === 400 || updateResponse.data.status === 400) {
                     setMessage("Error");
                 }
-                dispatch(setNewVideo(videoId))
+                dispatch(setNewVideo(videoId));
+                setMessageChannel("Updated video successfully")
             } catch (error) {
                 console.log(error)
             }
@@ -164,7 +201,7 @@ console.log("tags",tags);
       fixed rounded-md z-25'
             >
                 <div className='absolute top-5 right-5 cursor-pointer'
-                    onClick={() => setEdit(false)}>
+                    onClick={() => { setEdited(pre => !pre); setEdit(false); setOpenMenu(false) }}>
                     <AiOutlineClose />
                 </div>
                 <p className='text-center text-2xl font-semibold mb-2'>
@@ -181,7 +218,7 @@ console.log("tags",tags);
                             <input type='text' name="title" required
                                 value={title}
                                 className='bg-yt-light-2 text-yt-white outline-none w-full'
-                                onChange={(e) => setTitle(e.target.value)}
+                                onChange={handleAddTitle}
                                 onClick={() => setSelectInput(1)} />
                         </div>
                         <div className={`bg-yt-light-2 flex flex-col text-yt-gray border rounded-sm py-1 px-2 w-full

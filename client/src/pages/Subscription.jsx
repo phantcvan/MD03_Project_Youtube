@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getUser, setUser, getShowMenu, setShowMenu } from "../slices/userSlice";
+import { getUser, setUser} from "../slices/userSlice";
+import { getShowMenu, setShowMenu } from "../slices/appSlice";
 import { useDispatch, useSelector } from 'react-redux';
 import { getAllChannels, setChannelsSub, getChannelsSub } from '../slices/channelSlice';
 import axios from 'axios';

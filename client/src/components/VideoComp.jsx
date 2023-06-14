@@ -8,13 +8,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { handleNumber } from "../static/fn";
 import axios from "axios";
 import VideoDetail from "./VideoDetail";
+import { getCurrentWidth } from "../slices/appSlice";
 
 
-// import { setChannels, setCurrentUser, getChannels, getCurrentUser } from '../slices/channelSlice';
-
-
-const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail, allChannels, h, w,
-  channelDisplay, canEdit, setEdited, setOpen,user }) => {
+const VideoComp = ({ video_id, channel_id, videoURL, upload_date, views, title, thumbnail, allChannels, h, w,
+  channelDisplay, canEdit, setEdited, setOpen, user, setMessageChannel }) => {
   // console.log(h)
   const dispatch = useDispatch();
   const [openMenu, setOpenMenu] = useState(false);
@@ -23,6 +21,7 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
   const channelIndex = allChannels?.findIndex((e, i) => e.channel_id == channel_id)
   const channelName = allChannels[channelIndex]?.channel_name;
   const channelLogo = allChannels[channelIndex]?.logoUrl;
+  const curWid = useSelector(getCurrentWidth);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -43,10 +42,10 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
   const handleVideoClick = () => {
     dispatch(incrementView(video_id));
   };
-  // sửa video
-  // const handleEditVideo = (video_id) => {
-  //   setEdited(pre=>!pre)
-  // }
+  // thiết lập độ dài title
+  const titleMaxLength = curWid <= 480 ? "30" : curWid <= 1024 ? "48" : "70"
+  // thiết lập độ dài channel Name
+  const channelMaxLength = curWid <= 480 ? "18" : curWid <= 1024 ? "35" : "70"
 
   // Xoá video
   const handleDeleteVideo = (video_id) => {
@@ -54,60 +53,67 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
       .then(response => {
         setEdited(pre => !pre)
         console.log('Video đã được xoá thành công!');
+        setMessageChannel("Deleted Video Successfully");
       })
       .catch(error => {
         // Xử lý lỗi
         console.error('Đã có lỗi xảy ra khi xoá video:', error);
       });
+    setOpenMenu(false);
   }
   return (
     <div className={`flex flex-col cursor-pointer mt-2 object-cover w-[${w}]`}>
       <Link to={`/video/${video_id}`} onClick={handleVideoClick}>
         <div className={`overflow-hidden rounded-2xl`} style={{ height: h }}>
-          <img
-            src={thumbnail}
-            alt=""
-            className={`w-[${w}] h-[${h}] object-cover z-10`}
-            style={imageStyle}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          // onError={handleGifLoadError}
-          />
+          {isHovered
+            ? <ReactPlayer url={videoURL} playing={true} muted width={w} height={h}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+            : <img
+              src={thumbnail}
+              alt=""
+              className={`w-[${w}] h-[${h}] object-cover z-10`}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+          }
         </div>
       </Link>
       <div className="flex mt-3">
         {channelDisplay
           &&
           <Link to={`/channel/${channel_id}`}>
-            <div className="flex h-9 w-9 rounded-full overflow-hidden">
+            <div className={`flex ${curWid <= 480 ? "h-6 w-6" : curWid <= 1024 ? "h-7 w-7" : "h-9 w-9"} rounded-full overflow-hidden`}>
               <img src={channelLogo} alt="" className="w-full h-full object-cover" />
             </div>
           </Link>
         }
-        <div className="ml-2 flex">
-          <div>
+        <div className="ml-2 flex justify-between gap-2 w-full">
+          <div className="flex flex-1 flex-col">
             <Link to={`/video/${video_id}`}>
-              <h2 className="font-medium text-yt-white text-sm mt-0 mb-0 items-center text-justify">
-                {title?.length <= 70 ? title : `${title.substr(0, 70)}...`}
+              <h2 className={`font-medium text-yt-white mt-0 mb-0 items-center text-justify
+              ${curWid <= 480 ? "text-xs" : "text-sm"}`}>
+                {title?.length <= titleMaxLength ? title : `${title.substr(0, titleMaxLength)}...`}
               </h2>
             </Link>
             {channelDisplay
               &&
               <Link to={`/channel/${channel_id}`}>
-                <h3 className="text-yt-gray text-xs mt-1 flex items-center">
-                  {channelName}
+                <h3 className={`text-yt-gray ${curWid <= 480 ? "text-[10px]" : "text-xs"} mt-1 flex items-center`}>
+                  {channelName?.length <= channelMaxLength ? channelName : `${channelName.substr(0, channelMaxLength)}...`}
                   <span className="p-1">
                     <MdVerified />
                   </span>
                 </h3>
               </Link>
             }
-            <p className="text-yt-gray m-0 font-medium text-xs">
+            <p className={`text-yt-gray m-0 font-medium ${curWid <= 480 ? "text-[10px]" : "text-xs"}`}>
               {`${handleNumber(Number(views))}`} Views • {uploadTime}
             </p>
           </div>
           {canEdit &&
-            <div className="relative">
+            <div className="relative flex basis-[10%] justify-end">
               <span className="hover:rounded-full hover:bg-yt-light-2 p-2 w-8 h-8 flex items-center "
                 onClick={() => setOpenMenu(pre => !pre)}>
                 <BsThreeDotsVertical size={18} />
@@ -122,7 +128,8 @@ const VideoComp = ({ video_id, channel_id, upload_date, views, title, thumbnail,
                   </span>
                 </div>}
             </div>}
-          {edit && <VideoDetail  setEdit={setEdit} setOpen={setOpen} videoId={video_id} user={user}  />}
+          {edit && <VideoDetail setEdit={setEdit} setEdited={setEdited} setOpen={setOpen} videoId={video_id} user={user}
+            setOpenMenu={setOpenMenu} setMessageChannel={setMessageChannel} />}
         </div>
       </div>
     </div>

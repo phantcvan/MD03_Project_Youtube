@@ -9,8 +9,28 @@ import Search from "./pages/Search";
 import UploadVideo from "./components/UploadVideo";
 import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
+import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { setCurrentWidth } from "./slices/appSlice";
 
 function App() {
+  const [curWidth, setCurWidth] = useState(window.innerWidth);
+  const dispatch = useDispatch();
+
+      // set Width khi resize
+  const setWidth = (e) => {
+    setCurWidth(e.target.innerWidth)
+  }
+  useEffect(() => {
+    window.addEventListener('resize', setWidth)
+    return () => {
+      window.removeEventListener('resize', setWidth)
+    }
+  }, [])
+  // truyền width cho các page
+  useEffect(() => {
+    dispatch(setCurrentWidth(curWidth))
+  }, [curWidth])
   return (
     <>
       <BrowserRouter>

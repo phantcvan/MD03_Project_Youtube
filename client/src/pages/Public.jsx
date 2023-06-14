@@ -2,7 +2,7 @@ import React, { useDebugValue, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
-import { getShowMenu, setShowMenu } from '../slices/userSlice';
+import { getShowMenu, setShowMenu } from '../slices/appSlice';
 import { useDispatch, useSelector } from "react-redux";
 import { Scrollbars } from 'react-custom-scrollbars-2';
 

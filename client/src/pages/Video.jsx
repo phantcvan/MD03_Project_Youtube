@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { addDoc, collection, doc, onSnapshot, query } from "firebase/firestore";
-import { auth, db, timestamp } from "../firebase";
+import { auth, provider } from "../firebase";
 // import { HiDotsHorizontal, HiDownload } from "react-icons/hi";
 import { MdOutlineSort } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { getUser, setUser, getShowMenu, setShowMenu, getShowLogIn, setShowLogIn } from "../slices/userSlice";
+import { getShowMenu, setShowMenu, getShowLogIn, setShowLogIn, getCurrentWidth } from "../slices/appSlice";
+import { getUser, setUser} from "../slices/userSlice";
 import { onAuthStateChanged } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
 import Comment from "../components/Comment";
 import { CategoryItems } from "../static/data";
 import RecommendVideo from "../components/RecommendVideo";
@@ -15,6 +17,7 @@ import ReactPlayer from 'react-player';
 import { getAllTags, getVideos, getSearchQuery, incrementView } from '../slices/videoSlice';
 import { setCurrentUser, getAllChannels, getCurrentUser } from '../slices/channelSlice';
 import VideoInfo from "../components/VideoInfo";
+import avatarDefault from "../assets/avatar.jpg";
 
 
 
@@ -43,28 +46,34 @@ const Video = ({ }) => {
   const currentUser = useSelector(getCurrentUser);
   // const videos = useSelector(getVideos);
   const searchQuery = useSelector(getSearchQuery);
-  // const allTags = useSelector(getAllTags);
+  const curWid = useSelector(getCurrentWidth);
 
   const fetchData = async () => {
     try {
-      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse, commentsResponse,
+      const [allTagsResponse, tagsResponse, videosResponse, channelsResponse, commentsResponse, actionsResponse
       ] = await Promise.all([
         axios.get('http://localhost:8000/api/v1/tags'),
         axios.get('http://localhost:8000/api/v1/videos/list_tags'),
         axios.get('http://localhost:8000/api/v1/videos'),
         axios.get('http://localhost:8000/api/v1/channels'),
         axios.get(`http://localhost:8000/api/v1/comments/${id}`),
+        axios.get(`http://localhost:8000/api/v1/actions/${id}`),
       ]);
 
       const tagsWithAll = tagsResponse.data.tags;
       tagsWithAll.unshift({ tag: 'All' });
       setTags(tagsWithAll);
       setAllTags(allTagsResponse.data.tags);
-      setVideos(videosResponse.data.videos);
-      setAllChannels(channelsResponse.data.channels);
-      setComments(commentsResponse.data.findCmt);
+      setVideos(videosResponse?.data.videos);
+      setAllChannels(channelsResponse?.data.channels);
+      setComments(commentsResponse?.data.findCmt);
+      setCountLike(actionsResponse?.data.actions.filter(action => action.action === 1).length);
+      setCountDislike(actionsResponse?.data.actions.filter(action => action.action === 0).length);
       dispatch(setShowMenu(false));
       dispatch(setShowLogIn(false));
+      if (user) {
+        setUserAction(actionsResponse?.data.actions.find(action => action.email === user?.email).action)
+      }
 
     } catch (error) {
       console.error(error);
@@ -72,6 +81,7 @@ const Video = ({ }) => {
   };
   useEffect(() => {
     fetchData();
+    // fetchDataChangeId();
   }, []);
   // Sau 1s thì đóng snackbar
   useEffect(() => {
@@ -133,18 +143,18 @@ const Video = ({ }) => {
         axios.get(`http://localhost:8000/api/v1/actions/${id}`),
         axios.get(`http://localhost:8000/api/v1/subscribes`),
       ]);
-      setData(videoResponse.data.findVideo[0]);
-      setComments(commentsResponse.data.findCmt);
-      updateView(videoResponse.data.findVideo[0].views);
-      setSubscribes(subscribesResponse.data.subscribes);
-      console.log("actionsResponse", actionsResponse.data.actions);
+      setData(videoResponse?.data.findVideo[0]);
+      setComments(commentsResponse?.data.findCmt);
+      updateView(videoResponse?.data.findVideo[0].views);
+      setSubscribes(subscribesResponse?.data.subscribes);
+      console.log("actionsResponse", actionsResponse?.data.actions);
+      setCountLike(actionsResponse?.data.actions.filter(action => action.action === 1).length);
+      setCountDislike(actionsResponse?.data.actions.filter(action => action.action === 0).length);
       if (user) {
-        setIsSubscribe(subscribesResponse.data.subscribes.some(item => item.channel_id === videoResponse.data.findVideo[0].channel_id &&
+        setIsSubscribe(subscribesResponse?.data.subscribes.some(item => item.channel_id === videoResponse?.data.findVideo[0].channel_id &&
           item.email === user?.email))
-        setUserAction(actionsResponse.data.actions.find(action => action.email === user?.email).action)
+        setUserAction(actionsResponse?.data.actions.find(action => action.email === user?.email).action)
       }
-      setCountLike(actionsResponse.data.actions.filter(action => action.action === 1).length);
-      setCountDislike(actionsResponse.data.actions.filter(action => action.action === 0).length);
     } catch (error) {
       console.error(error);
     }
@@ -357,13 +367,21 @@ const Video = ({ }) => {
     }
   };
 
+  // login
+  const handleLogin = async () => {
+    const response = await signInWithPopup(auth, provider);
+    dispatch(setUser(response.user));
+  };
+
 
   return (
-    <div className="py-12 px-9 bg-yt-black relative flex flex-row min-h-screen h-[calc(100%-53px)] w-[100%] mt-10 gap-8">
-      <div className="flex-1 w-[640px]"  >
-        <div className="flex justify-center items-center flex-1">
+    <div className={`bg-yt-black relative flex flex-row min-h-screen h-[calc(100%-53px)] w-[100%] 
+    ${curWid <= 480 ? "py-8 px-6 mt-10 gap-3" : curWid <= 1024 ? "py-8 px-8 mt-10 gap-6" : "py-12 px-9 mt-10 gap-8"}`}>
+      <div className={`flex-1 ${curWid <= 480 ? "w-400px" : curWid <= 1024 ? "w-500px" : "w-640px"}`}  >
+        <div className="flex items-center flex-1">
           <ReactPlayer url={videoUrl} controls playing={true}
-            width="640px" height="360px" />
+            width={`${curWid <= 480 ? "400px" : curWid <= 1024 ? "450px" : "640px"}`} 
+            height={`${curWid <= 480 ? "225px" : curWid <= 1024 ? "253px" : "360px"}`}  />
         </div>
         <h2 className="text-yt-white font-semibold mt-5 mb-3 text-lg">
           {data?.title}
@@ -392,36 +410,61 @@ const Video = ({ }) => {
           {tagFound
             ? <div className="text-center mt-2">
               <span>Comments are turned off. </span>
-              <span className="text-[#1967D2]">Learn more</span>
+              <span className="text-[#1967D2] cursor-pointer"
+                onClick={() => setMessage("The channel or video's audience is set as 'Made for Kids'.")}
+              >
+                Learn more
+              </span>
             </div>
             :
             <>
               <div className="flex items-center">
-                <h1>{comments.length} {comments.length>1?"Comments":"Comment"}</h1>
+                <h1>{comments.length} {comments.length > 1 ? "Comments" : "Comment"}</h1>
               </div>
 
-              {user && (
-                <form onSubmit={addComment} className="flex w-full pt-4 items-start">
-                  <img
-                    src={user?.photoURL}
-                    alt="profile"
-                    className="rounded-full mr-3 h-12 w-12"
-                  />
-                  <input
-                    value={comment}
-                    onChange={handleInputChange}
-                    type="text"
-                    placeholder="Add a comment..."
-                    className="bg-[transparent] border-b border-b-yt-light-black outline-none text-sm p-1 w-full"
-                  />
-                  <button className={`ml-1 p-2 rounded-r-full rounded-l-full
+              {user
+                ? (
+                  <form onSubmit={addComment} className="flex w-full pt-4 items-start">
+                    <img
+                      src={user?.photoURL}
+                      alt="profile"
+                      className="rounded-full mr-3 h-12 w-12"
+                    />
+                    <input
+                      value={comment}
+                      onChange={handleInputChange}
+                      type="text"
+                      placeholder="Add a comment..."
+                      className="bg-[transparent] border-b border-b-yt-light-black outline-none text-sm p-1 w-full"
+                    />
+                    <button className={`ml-1 p-2 rounded-r-full rounded-l-full
                   ${existCmt ? "text-yt-black bg-[#3EA6FF] hover:bg-[#65B8FF] cursor-pointer" : "text-yt-gray bg-yt-light-2"}`}
-                    disabled={!existCmt}
-                  >
-                    Comment
-                  </button>
-                </form>
-              )}
+                      disabled={!existCmt}
+                    >
+                      Comment
+                    </button>
+                  </form>
+                )
+                : (
+                  <div className="flex w-full pt-4 items-start">
+                    <img
+                      src={avatarDefault}
+                      alt="profile"
+                      className="rounded-full mr-3 h-12 w-12"
+                    />
+                    <input
+                      onClick={handleLogin}
+                      type="text"
+                      placeholder="Add a comment..."
+                      className="bg-[transparent] border-b border-b-yt-light-black outline-none text-sm p-1 w-full"
+                    />
+                    <button className={`ml-1 p-2 rounded-r-full rounded-l-full text-yt-gray bg-yt-light-2`}
+                      onClick={handleLogin}
+                    >
+                      Comment
+                    </button>
+                  </div>
+                )}
               <div className="mt-4 mb-6">
                 {comments.map((item, i) => (
                   <Comment key={i} {...item} />

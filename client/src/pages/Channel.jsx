@@ -5,8 +5,9 @@ import {
     getAllChannels, setAllChannels, getCurrentUser, setCurrentUser,
     getChannelsSub, setChannelsSub
 } from '../slices/channelSlice';
-import { getUser, setUser, getShowMenu, setShowMenu, getShowLogIn, setShowLogIn } from "../slices/userSlice";
-import { useParams } from 'react-router-dom';
+import { getShowMenu, setShowMenu, getShowLogIn, setShowLogIn } from "../slices/appSlice";
+import { getUser, setUser} from "../slices/userSlice";
+import { Link, useParams } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 import { FaRegBell } from "react-icons/fa";
 import { auth, db, timestamp } from "../firebase";
@@ -41,7 +42,7 @@ const Channel = ({ }) => {
     const [subscribes, setSubscribes] = useState([]);
     const [subscriber, setSubscriber] = useState(0); //số người đăng ký
     const [isSubscribe, setIsSubscribe] = useState(false);
-    const [message, setMessage] = useState("");
+    const [messageChannel, setMessageChannel] = useState("");
     const channelsSub = useSelector(getChannelsSub); //các kênh đăng ký
     const showMenu = useSelector(getShowMenu);
     const showLogIn = useSelector(getShowLogIn);
@@ -63,7 +64,7 @@ const Channel = ({ }) => {
             setSubscriber(subscriberResponse.data.subscribes?.length);
             if (user) {
                 setIsSubscribe(subscriberResponse.data.subscribes.some(item => item.email === user?.email))
-            } 
+            }
             dispatch(setAllChannels(allChannelResponse.data.channels));
             dispatch(setShowMenu(false));
             dispatch(setShowLogIn(false));
@@ -164,7 +165,7 @@ const Channel = ({ }) => {
                 dispatch(setChannelsSub(newChannelSub));
             }
         } else {
-            setMessage("Log in to subscribe this channel")
+            setMessageChannel("Log in to subscribe this channel")
         }
 
         try {
@@ -180,13 +181,13 @@ const Channel = ({ }) => {
     };
     useEffect(() => {
         const timeout = setTimeout(() => {
-            setMessage("");
+            setMessageChannel("");
         }, 1000);
-    
+
         return () => {
-          clearTimeout(timeout);
+            clearTimeout(timeout);
         };
-      }, [message])
+    }, [messageChannel])
     console.log("subscriber", channelsSub);
     return (
         <div className="pt-20 px-9 bg-yt-black min-h-screen h-[calc(100%-53px)] w-full text-yt-white">
@@ -255,7 +256,7 @@ const Channel = ({ }) => {
 
             {videoCount > 0
                 ? isChoice == 2
-                    ? <div className="ml-32 mr-10 pt-2 px-5 grid grid-cols-ch gap-x-5 gap-y-8 my-6">
+                    ? <div className="ml-32 mr-10 pt-2 px-5 grid grid-cols-ch gap-x-5 gap-y-5 my-6">
                         {videosBelongToChannel?.map((video, i) => (
                             <div className="flex max-w-[200px] h-[200px]">
                                 <VideoComp
@@ -269,6 +270,7 @@ const Channel = ({ }) => {
                                     setEdited={setEdited}
                                     setOpen={setOpen}
                                     user={user}
+                                    setMessageChannel={setMessageChannel}
                                 />
                             </div>
                         ))}
@@ -281,7 +283,9 @@ const Channel = ({ }) => {
                                 />
                             </div>
                             <div className='flex flex-1 flex-col'>
-                                <span className='my-1 font-medium text-justify'>{videoHome?.title}</span>
+                                <Link to={`/video/${videoHome?.video_id}`}>
+                                    <span className='my-1 font-medium text-justify'>{videoHome?.title}</span>
+                                </Link>
                                 <span className='text-yt-gray my-1'>{handleNumber(videoHome?.views)} views • {uploadTime}</span>
                                 <span className='my-1 text-yt-gray text-justify'>{videoHome?.description}</span>
                             </div>
@@ -296,7 +300,7 @@ const Channel = ({ }) => {
                                         key={video.video_id}
                                         allChannels={allChannels}
                                         h="120px"
-                                        max_w="200px"
+                                        w="200px"
                                     />
                                 </div>
                             ))}
@@ -307,16 +311,16 @@ const Channel = ({ }) => {
             <div className='absolute top-[50%] left-[50%]'>
                 {open && <UploadVideo setOpen={setOpen} user={user} />}
             </div>
-            {message
-        && <div className='w-[100%] h-[100%] bg-overlay-40 flex items-center 
+            {messageChannel
+                && <div className='w-[100%] h-[100%] bg-overlay-40 flex items-center 
                 justify-center z-30 absolute top-0 bottom-0 left-0 right-0' >
-          <div
-            className='w-fit h-[60px] bg-[#F1F1F1] text-yt-light-2 p-5 fixed bottom-3 rounded-md'
-          >
-            <span className='font-medium'>{message}</span>
-          </div>
-        </div>
-      }
+                    <div
+                        className='w-fit h-[60px] bg-[#F1F1F1] text-yt-light-2 p-5 fixed bottom-3 rounded-md'
+                    >
+                        <span className='font-medium'>{messageChannel}</span>
+                    </div>
+                </div>
+            }
         </div>
 
     )
